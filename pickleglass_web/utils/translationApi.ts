@@ -20,13 +20,17 @@ export const translationApi = {
     targetLanguage: string,
     sourceLanguage?: string
   ): Promise<TranslationResult> => {
+    console.log('Translation API called:', { text: text?.substring(0, 50), targetLanguage, sourceLanguage });
+
     if (!window.api?.translation) {
-      console.warn('Translation API not available');
+      console.warn('Translation API not available - window.api:', window.api);
       return { success: false, translatedText: text, error: 'Translation API not available' };
     }
 
     try {
-      return await window.api.translation.translate(text, targetLanguage, sourceLanguage);
+      const result = await window.api.translation.translate(text, targetLanguage, sourceLanguage);
+      console.log('Translation result:', result);
+      return result;
     } catch (error) {
       console.error('Translation error:', error);
       return { success: false, translatedText: text, error: error instanceof Error ? error.message : 'Unknown error' };
@@ -39,11 +43,14 @@ export const translationApi = {
   getSettings: async (): Promise<TranslationSettings | null> => {
     if (!window.api?.translation) {
       console.warn('Translation API not available');
+      console.log('window.api:', window.api);
       return null;
     }
 
     try {
-      return await window.api.translation.getSettings();
+      const settings = await window.api.translation.getSettings();
+      console.log('Translation settings loaded:', settings);
+      return settings;
     } catch (error) {
       console.error('Failed to get translation settings:', error);
       return null;
