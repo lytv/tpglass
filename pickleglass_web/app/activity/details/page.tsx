@@ -12,6 +12,8 @@ import {
   getSessionDetails,
   deleteSession,
 } from '@/utils/api'
+import { translationApi } from '@/utils/translationApi'
+import { Languages, Copy, Check } from 'lucide-react'
 
 type ConversationItem = (Transcript & { type: 'transcript' }) | (AiMessage & { type: 'ai_message' });
 
@@ -32,14 +34,64 @@ function SessionDetailsContent() {
   const sessionId = searchParams.get('sessionId');
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // Translation state
+  const [translationEnabled, setTranslationEnabled] = useState(false);
+  const [targetLanguage, setTargetLanguage] = useState('en');
+  const [translatedTexts, setTranslatedTexts] = useState<Record<string, string>>({});
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+
+  // Fetch translation for a single transcript
+  const fetchTranslation = async (text: string, transcriptId: string) => {
+    if (!translationEnabled || !text) return;
+
+    try {
+      const result = await translationApi.translate(text, targetLanguage);
+      if (result.success && result.translatedText) {
+        setTranslatedTexts((prev) => ({
+          ...prev,
+          [transcriptId]: result.translatedText
+        }));
+      }
+    } catch (error) {
+      console.error('Translation error:', error);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  // Load translation settings on mount
   useEffect(() => {
-    if (userInfo && sessionId) {
+    const loadSettings = async () => {
+      const settings = await translationApi.getSettings();
+      if (settings) {
+        setTranslationEnabled(settings.enabled);
+        setTargetLanguage(settings.language);
+      }
+      setSettingsLoaded(true);
+    };
+    loadSettings();
+  }, []);
+
+  // Load session details after settings
+  useEffect(() => {
+    if (userInfo && sessionId && settingsLoaded) {
       const fetchDetails = async () => {
         setIsLoading(true);
         try {
           const details = await getSessionDetails(sessionId as string);
           setSessionDetails(details);
+
+          // Auto-trigger translation if enabled and transcripts exist
+          if (translationEnabled && details.transcripts && details.transcripts.length > 0) {
+            setShowTranslation(true);
+            for (const item of details.transcripts) {
+              await fetchTranslation(item.text, item.id);
+            }
+          }
         } catch (error) {
           console.error('Failed to load session details:', error);
         } finally {
@@ -48,7 +100,7 @@ function SessionDetailsContent() {
       };
       fetchDetails();
     }
-  }, [userInfo, sessionId]);
+  }, [userInfo, sessionId, settingsLoaded, translationEnabled, targetLanguage]);
 
   const handleDelete = async () => {
     if (!sessionId) return;
@@ -63,6 +115,50 @@ function SessionDetailsContent() {
       console.error(error);
     }
   };
+
+  const handleCopyTranslation = async (text: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy text:', err);
+    }
+  };
+
+  const handleToggleTranslation = () => {
+    if (!showTranslation) {
+      // If no translations exist yet, trigger translation
+      if (Object.keys(translatedTexts).length === 0 && sessionDetails?.transcripts) {
+        setIsTranslating(true);
+        // Translate all transcripts
+        sessionDetails.transcripts.forEach(async (item) => {
+          await fetchTranslation(item.text, item.id);
+        });
+      }
+      setShowTranslation(true);
+    } else {
+      setShowTranslation(false);
+    }
+  };
+
+  // Listen for translation settings changes
+  useEffect(() => {
+    const cleanup = translationApi.onSettingsUpdated((settings) => {
+      setTranslationEnabled(settings.enabled);
+      setTargetLanguage(settings.language);
+
+      // Re-translate if enabled and transcripts exist
+      if (settings.enabled && sessionDetails?.transcripts) {
+        setTranslatedTexts({});
+        sessionDetails.transcripts.forEach(async (item) => {
+          await fetchTranslation(item.text, item.id);
+        });
+      }
+    });
+
+    return cleanup;
+  }, [sessionDetails]);
 
   if (!userInfo || isLoading) {
     return (
@@ -156,13 +252,70 @@ function SessionDetailsContent() {
                 
                 {sessionDetails.transcripts && sessionDetails.transcripts.length > 0 && (
                     <Section title="Listen: Transcript">
-                        <div className="space-y-3">
-                            {sessionDetails.transcripts.map((item) => (
-                                <p key={item.id} className="text-gray-700">
-                                    <span className="font-semibold capitalize">{item.speaker}: </span>
-                                    {item.text}
-                                </p>
-                            ))}
+                        {/* Translation Toggle */}
+                        <div className="flex items-center gap-2 mb-4">
+                            <Languages className="h-4 w-4 text-gray-500" />
+                            <span className="text-sm text-gray-600">Translated</span>
+                            <button
+                                onClick={handleToggleTranslation}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                    showTranslation ? 'bg-blue-600' : 'bg-gray-200'
+                                }`}
+                            >
+                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                    showTranslation ? 'translate-x-6' : 'translate-x-1'
+                                }`} />
+                            </button>
+                        </div>
+
+                        {/* Side-by-side transcript display */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Original text - always shown */}
+                            <div className="border-b md:border-b-0 md:border-r border-gray-200 pb-4 md:pb-0 md:pr-4">
+                                <h3 className="font-semibold text-gray-700 mb-2">Original</h3>
+                                <div className="space-y-3">
+                                    {sessionDetails.transcripts.map((item) => (
+                                        <p key={item.id} className="text-gray-700">
+                                            <span className="font-semibold capitalize">{item.speaker}: </span>
+                                            {item.text}
+                                        </p>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Translated text - shown when enabled */}
+                            <div className="pt-4 md:pt-0 md:pl-4">
+                                <h3 className="font-semibold text-gray-700 mb-2">Translated</h3>
+                                {isTranslating ? (
+                                    <div className="flex justify-center items-center h-32">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+                                    </div>
+                                ) : showTranslation ? (
+                                    <div className="space-y-3">
+                                        {sessionDetails.transcripts.map((item) => (
+                                            <div key={`translated-${item.id}`} className="flex items-start justify-between group">
+                                                <p className="text-gray-700 flex-1">
+                                                    <span className="font-semibold capitalize">{item.speaker}: </span>
+                                                    {translatedTexts[item.id] || item.text}
+                                                </p>
+                                                <button
+                                                    onClick={() => handleCopyTranslation(translatedTexts[item.id] || item.text, item.id)}
+                                                    className="ml-2 p-1 text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    title="Copy translation"
+                                                >
+                                                    {copiedId === item.id ? (
+                                                        <Check className="h-4 w-4 text-green-500" />
+                                                    ) : (
+                                                        <Copy className="h-4 w-4" />
+                                                    )}
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-gray-500 italic">Enable translation to see translated text</p>
+                                )}
+                            </div>
                         </div>
                     </Section>
                 )}
