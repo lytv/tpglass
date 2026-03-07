@@ -2,6 +2,7 @@ const { globalShortcut, screen } = require('electron');
 const shortcutsRepository = require('./repositories');
 const internalBridge = require('../../bridge/internalBridge');
 const askService = require('../ask/askService');
+const listenService = require('../listen/listenService');
 
 
 class ShortcutsService {
@@ -71,6 +72,7 @@ class ShortcutsService {
             nextResponse: isMac ? 'Cmd+]' : 'Ctrl+]',
             scrollUp: isMac ? 'Cmd+Shift+Up' : 'Ctrl+Shift+Up',
             scrollDown: isMac ? 'Cmd+Shift+Down' : 'Ctrl+Shift+Down',
+            toggleListen: isMac ? 'Cmd+L' : 'Ctrl+L',
         };
     }
 
@@ -262,6 +264,17 @@ class ShortcutsService {
                     break;
                 case 'nextResponse':
                     callback = () => sendToRenderer('navigate-next-response');
+                    break;
+                case 'toggleListen':
+                    callback = async () => {
+                        try {
+                            const isSessionActive = await listenService.isSessionActive();
+                            const buttonText = isSessionActive ? 'Stop' : 'Listen';
+                            await listenService.handleListenRequest(buttonText);
+                        } catch (error) {
+                            console.error('[Shortcuts] Error toggling listen:', error);
+                        }
+                    };
                     break;
             }
             
