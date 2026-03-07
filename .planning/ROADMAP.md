@@ -30,7 +30,10 @@
 2. Translated results are cached by source text hash to avoid redundant API calls for same content
 3. Translation failures return original text with error indicator, app continues to function
 
-**Plans**: TBD
+**Plans**: 1 plan
+
+**Plans**:
+- [ ] 02-translation-service/02-01-PLAN.md — TranslationService with OpenAI API, caching, and error handling
 
 ---
 
@@ -86,7 +89,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 2 - Translation Service | 0/1 | Not started | - |
+| 2 - Translation Service | 1/1 | Planned | - |
 | 3 - Settings UI | 0/1 | Not started | - |
 | 4 - Display Integration | 0/1 | Not started | - |
 | 5 - Integration & Polish | 0/1 | Not started | - |
