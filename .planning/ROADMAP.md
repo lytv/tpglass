@@ -9,7 +9,7 @@
 
 ## Phases
 
-- [ ] **Phase 2: Translation Service** - Backend API integration and translation logic
+- [x] **Phase 2: Translation Service** - Backend API integration and translation logic
 - [ ] **Phase 3: Settings UI** - Toggle and language selector in Settings
 - [ ] **Phase 4: Display Integration** - Translated text display and toggle in Listen view
 - [ ] **Phase 5: Integration & Polish** - End-to-end integration and refinement
@@ -33,7 +33,7 @@
 **Plans**: 1 plan
 
 **Plans**:
-- [ ] 02-translation-service/02-01-PLAN.md — TranslationService with OpenAI API, caching, and error handling
+- [x] 02-translation-service/02-01-PLAN.md — TranslationService with OpenAI API, caching, and error handling
 
 ---
 
@@ -89,7 +89,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 2 - Translation Service | 1/1 | Planned | - |
+| 2 - Translation Service | 1/1 | Complete | 2026-03-07 |
 | 3 - Settings UI | 0/1 | Not started | - |
 | 4 - Display Integration | 0/1 | Not started | - |
 | 5 - Integration & Polish | 0/1 | Not started | - |
@@ -97,4 +97,4 @@
 ---
 
 *Roadmap updated: 2026-03-07*
-*Next: /gsd:plan-phase 2*
+*Next: /gsd:plan-phase 3*
