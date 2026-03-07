@@ -230,6 +230,15 @@ export class ListenView extends LitElement {
             background: rgba(255, 255, 255, 0.1);
         }
 
+        .toggle-button.active {
+            background: rgba(255, 193, 7, 0.3);
+            color: rgba(255, 193, 7, 1);
+        }
+
+        .toggle-button.active:hover {
+            background: rgba(255, 193, 7, 0.4);
+        }
+
         .toggle-button svg {
             flex-shrink: 0;
             width: 12px;
@@ -466,6 +475,9 @@ export class ListenView extends LitElement {
         captureStartTime: { type: Number },
         isSessionActive: { type: Boolean },
         hasCompletedRecording: { type: Boolean },
+        showTranslation: { type: Boolean },
+        translationEnabled: { type: Boolean },
+        translationLanguage: { type: String },
     };
 
     constructor() {
@@ -484,12 +496,17 @@ export class ListenView extends LitElement {
         this.copyTimeout = null;
         this.saveState = 'idle';
         this.saveTimeout = null;
+        this.showTranslation = false;
+        this.translationEnabled = false;
+        this.translationLanguage = 'en';
 
         this.adjustWindowHeight = this.adjustWindowHeight.bind(this);
     }
 
-    connectedCallback() {
+    async connectedCallback() {
         super.connectedCallback();
+        // Load translation settings
+        await this.loadTranslationSettings();
         // Only start timer if session is active
         if (this.isSessionActive) {
             this.startTimer();
@@ -683,6 +700,31 @@ export class ListenView extends LitElement {
         this.requestUpdate();
     }
 
+    async loadTranslationSettings() {
+        if (!window.api) return;
+        try {
+            const settings = await window.api.translation.getSettings();
+            if (settings) {
+                this.translationEnabled = settings.enabled || false;
+                this.translationLanguage = settings.language || 'en';
+                console.log('[ListenView] Translation settings loaded:', this.translationEnabled, this.translationLanguage);
+            }
+        } catch (e) {
+            console.error('[ListenView] Error loading translation settings:', e);
+        }
+        this.requestUpdate();
+    }
+
+    toggleTranslation() {
+        if (!this.translationEnabled) {
+            console.log('[ListenView] Translation is not enabled in settings');
+            return;
+        }
+        this.showTranslation = !this.showTranslation;
+        console.log('[ListenView] Toggle translation:', this.showTranslation);
+        this.requestUpdate();
+    }
+
     adjustWindowHeightThrottled() {
         if (this.isThrottled) {
             return;
@@ -748,6 +790,18 @@ export class ListenView extends LitElement {
                                       <span>Show Insights</span>
                                   `}
                         </button>
+                        ${this.translationEnabled ? html`
+                        <button
+                            class="toggle-button ${this.showTranslation ? 'active' : ''}"
+                            @click=${this.toggleTranslation}
+                            title="Toggle translation"
+                        >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 11.62 7.3 11.62l2.7-2.61 2.7 2.61c.36.35.89.55 1.5.55.58 0 1.14-.19 1.57-.52l1.96-1.8c.42-.39.65-.94.65-1.51V6h1.5v.5c0 .56.23 1.11.65 1.5l-2.55 2.51z"/>
+                            </svg>
+                            <span>${this.translationLanguage.toUpperCase()}</span>
+                        </button>
+                        ` : ''}
                         <button
                             class="copy-button ${this.copyState === 'copied' ? 'copied' : ''}"
                             @click=${this.handleCopy}
@@ -776,8 +830,10 @@ export class ListenView extends LitElement {
                     </div>
                 </div>
 
-                <stt-view 
+                <stt-view
                     .isVisible=${this.viewMode === 'transcript'}
+                    .showTranslation=${this.showTranslation && this.translationEnabled}
+                    .translationLanguage=${this.translationLanguage}
                     @stt-messages-updated=${this.handleSttMessagesUpdated}
                 ></stt-view>
 

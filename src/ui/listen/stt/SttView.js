@@ -67,6 +67,51 @@ export class SttView extends LitElement {
             margin-left: auto;
         }
 
+        .message-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-width: 80%;
+        }
+
+        .message-wrapper.them {
+            align-self: flex-start;
+            margin-right: auto;
+        }
+
+        .message-wrapper.me {
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        .original-text {
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .translated-text {
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            background: rgba(255, 193, 7, 0.2);
+            color: rgba(255, 193, 7, 0.9);
+            font-style: italic;
+        }
+
+        .message-wrapper.them .translated-text {
+            align-self: flex-start;
+        }
+
+        .message-wrapper.me .translated-text {
+            align-self: flex-end;
+        }
+
+        .translation-loading {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            font-style: italic;
+        }
+
         .empty-state {
             display: flex;
             align-items: center;
@@ -81,14 +126,22 @@ export class SttView extends LitElement {
     static properties = {
         sttMessages: { type: Array },
         isVisible: { type: Boolean },
+        showTranslation: { type: Boolean },
+        translationLanguage: { type: String },
+        translations: { type: Object, state: true },
     };
 
     constructor() {
         super();
         this.sttMessages = [];
         this.isVisible = true;
+        this.showTranslation = false;
+        this.translationLanguage = 'en';
+        this.translations = {};
         this.messageIdCounter = 0;
         this._shouldScrollAfterUpdate = false;
+        this._translationCache = new Map();
+        this._pendingTranslations = new Set();
 
         this.handleSttUpdate = this.handleSttUpdate.bind(this);
     }
@@ -110,6 +163,9 @@ export class SttView extends LitElement {
     // Handle session reset from parent
     resetTranscript() {
         this.sttMessages = [];
+        this.translations = {};
+        this._translationCache.clear();
+        this._pendingTranslations.clear();
         this.requestUpdate();
     }
 
@@ -192,6 +248,49 @@ export class SttView extends LitElement {
         return this.sttMessages.map(msg => `${msg.speaker}: ${msg.text}`).join('\n');
     }
 
+    async translateMessage(text, messageId) {
+        if (!text || !this.translationLanguage) return null;
+
+        // Check cache first
+        const cacheKey = `${text}_${this.translationLanguage}`;
+        if (this._translationCache.has(cacheKey)) {
+            const cachedText = this._translationCache.get(cacheKey);
+            this.translations = { ...this.translations, [messageId]: cachedText };
+            return cachedText;
+        }
+
+        // Check if already pending
+        if (this._pendingTranslations.has(messageId)) {
+            return null;
+        }
+
+        // Skip very short texts
+        if (text.length < 3) {
+            return null;
+        }
+
+        this._pendingTranslations.add(messageId);
+
+        try {
+            const result = await window.api.translation.translate(
+                text,
+                this.translationLanguage,
+                'auto'
+            );
+
+            this._translationCache.set(cacheKey, result.translatedText);
+            this._pendingTranslations.delete(messageId);
+            this.translations = { ...this.translations, [messageId]: result.translatedText };
+            this.requestUpdate();
+
+            return result.translatedText;
+        } catch (error) {
+            console.error('[SttView] Translation error:', error);
+            this._pendingTranslations.delete(messageId);
+            return null;
+        }
+    }
+
     updated(changedProperties) {
         super.updated(changedProperties);
 
@@ -200,7 +299,27 @@ export class SttView extends LitElement {
                 this.scrollToBottom();
                 this._shouldScrollAfterUpdate = false;
             }
+            // Trigger translations for new final messages
+            if (this.showTranslation) {
+                this.triggerTranslations();
+            }
         }
+
+        if (changedProperties.has('showTranslation') && this.showTranslation) {
+            this.triggerTranslations();
+        }
+    }
+
+    triggerTranslations() {
+        if (!this.translationLanguage) return;
+
+        const finalMessages = this.sttMessages.filter(msg => msg.isFinal);
+        finalMessages.forEach(msg => {
+            const cacheKey = `${msg.text}_${this.translationLanguage}`;
+            if (!this._translationCache.has(cacheKey) && !this._pendingTranslations.has(msg.id)) {
+                this.translateMessage(msg.text, msg.id);
+            }
+        });
     }
 
     render() {
@@ -212,11 +331,26 @@ export class SttView extends LitElement {
             <div class="transcription-container">
                 ${this.sttMessages.length === 0
                     ? html`<div class="empty-state">Waiting for speech...</div>`
-                    : this.sttMessages.map(msg => html`
-                        <div class="stt-message ${this.getSpeakerClass(msg.speaker)}">
-                            ${msg.text}
-                        </div>
-                    `)
+                    : this.sttMessages.map(msg => {
+                        const wrapperClass = this.getSpeakerClass(msg.speaker);
+                        const translatedText = this.translations[msg.id];
+                        const isPending = this._pendingTranslations.has(msg.id);
+
+                        return html`
+                            <div class="message-wrapper ${wrapperClass}">
+                                <div class="stt-message ${wrapperClass}">
+                                    <span class="original-text">${msg.text}</span>
+                                </div>
+                                ${this.showTranslation && msg.isFinal ? html`
+                                    ${translatedText ? html`
+                                        <div class="translated-text">${translatedText}</div>
+                                    ` : isPending ? html`
+                                        <div class="translation-loading">Translating...</div>
+                                    ` : ''}
+                                ` : ''}
+                            </div>
+                        `;
+                    })
                 }
             </div>
         `;
