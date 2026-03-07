@@ -1,4 +1,4 @@
-// Translation API client for frontend
+// Translation API client for frontend - uses HTTP API
 
 export interface TranslationSettings {
   enabled: boolean;
@@ -9,6 +9,24 @@ export interface TranslationResult {
   success: boolean;
   translatedText: string;
   error: string | null;
+}
+
+// Helper to get API URL
+async function getApiUrl(): Promise<string> {
+  try {
+    const response = await fetch('/runtime-config.json');
+    if (response.ok) {
+      const config = await response.json();
+      return config.API_URL;
+    }
+  } catch (error) {
+    console.log('Failed to load runtime config, using fallback');
+  }
+  // Fallback - the API is on the same port but different path
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  return 'http://localhost:50990';
 }
 
 export const translationApi = {
@@ -22,13 +40,23 @@ export const translationApi = {
   ): Promise<TranslationResult> => {
     console.log('Translation API called:', { text: text?.substring(0, 50), targetLanguage, sourceLanguage });
 
-    if (!window.api?.translation) {
-      console.warn('Translation API not available - window.api:', window.api);
-      return { success: false, translatedText: text, error: 'Translation API not available' };
-    }
-
     try {
-      const result = await window.api.translation.translate(text, targetLanguage, sourceLanguage);
+      const apiUrl = await getApiUrl();
+      const response = await fetch(`${apiUrl}/api/translation/translate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text, targetLanguage, sourceLanguage }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.error('Translation API error:', error);
+        return { success: false, translatedText: text, error };
+      }
+
+      const result = await response.json();
       console.log('Translation result:', result);
       return result;
     } catch (error) {
@@ -41,14 +69,14 @@ export const translationApi = {
    * Get current translation settings
    */
   getSettings: async (): Promise<TranslationSettings | null> => {
-    if (!window.api?.translation) {
-      console.warn('Translation API not available');
-      console.log('window.api:', window.api);
-      return null;
-    }
-
     try {
-      const settings = await window.api.translation.getSettings();
+      const apiUrl = await getApiUrl();
+      const response = await fetch(`${apiUrl}/api/translation/settings`);
+      if (!response.ok) {
+        console.error('Failed to get translation settings:', response.statusText);
+        return null;
+      }
+      const settings = await response.json();
       console.log('Translation settings loaded:', settings);
       return settings;
     } catch (error) {
@@ -58,23 +86,12 @@ export const translationApi = {
   },
 
   /**
-   * Listen for translation settings changes
+   * Listen for translation settings changes - not implemented via HTTP
+   * This would require WebSocket or polling
    */
   onSettingsUpdated: (callback: (settings: TranslationSettings) => void): (() => void) => {
-    if (!window.api?.translation) {
-      console.warn('Translation API not available');
-      return () => {};
-    }
-
-    const handler = (_event: Electron.IpcRendererEvent, settings: TranslationSettings) => {
-      callback(settings);
-    };
-
-    window.api.translation.onTranslationSettingsUpdated(handler);
-
-    // Return cleanup function
-    return () => {
-      window.api.translation.removeOnTranslationSettingsUpdated(handler);
-    };
+    console.warn('Settings update listener not implemented for HTTP API - use polling instead');
+    // Return no-op cleanup
+    return () => {};
   }
 };
