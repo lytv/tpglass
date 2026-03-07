@@ -14,6 +14,7 @@ const askService = require('../features/ask/askService');
 const listenService = require('../features/listen/listenService');
 const permissionService = require('../features/common/services/permissionService');
 const encryptionService = require('../features/common/services/encryptionService');
+const translationService = require('../features/common/services/translationService');
 
 module.exports = {
   // Renderer로부터의 요청을 수신하고 서비스로 전달
@@ -26,6 +27,14 @@ module.exports = {
     // Translation settings
     ipcMain.handle('settings:getTranslationSettings', async () => await settingsService.getTranslationSettings());
     ipcMain.handle('settings:setTranslationSettings', async (event, { enabled, language }) => await settingsService.setTranslationSettings({ enabled, language }));
+
+    // Translation IPC handlers
+    ipcMain.handle('translation:translate', async (event, { text, targetLanguage, sourceLanguage }) => {
+      return await translationService.translate(text, targetLanguage, sourceLanguage);
+    });
+    ipcMain.handle('translation:getSettings', async () => {
+      return await settingsService.getTranslationSettings();
+    });
 
     ipcMain.handle('settings:get-model-settings', async () => await settingsService.getModelSettings());
     ipcMain.handle('settings:clear-api-key', async (e, { provider }) => await settingsService.clearApiKey(provider));

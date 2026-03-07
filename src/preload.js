@@ -312,5 +312,17 @@ contextBridge.exposeInMainWorld('api', {
     // Listeners
     onChangeListenCaptureState: (callback) => ipcRenderer.on('change-listen-capture-state', callback),
     removeOnChangeListenCaptureState: (callback) => ipcRenderer.removeListener('change-listen-capture-state', callback)
+  },
+
+  // Translation API
+  translation: {
+    // Translation
+    translate: (text, targetLanguage, sourceLanguage) =>
+      ipcRenderer.invoke('translation:translate', { text, targetLanguage, sourceLanguage }),
+    getSettings: () => ipcRenderer.invoke('translation:getSettings'),
+
+    // Listeners for settings changes
+    onTranslationSettingsUpdated: (callback) => ipcRenderer.on('translation-settings-updated', callback),
+    removeOnTranslationSettingsUpdated: (callback) => ipcRenderer.removeListener('translation-settings-updated', callback)
   }
 });
