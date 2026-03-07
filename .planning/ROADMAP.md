@@ -49,7 +49,10 @@
 2. User can select target language from dropdown list (20+ common languages)
 3. Translation settings persist across app restarts via electron-store
 
-**Plans**: TBD
+**Plans**: 1 plan
+
+**Plans**:
+- [x] 03-settings-ui/03-01-PLAN.md — Translation toggle and language selector in Settings
 
 ---
 
@@ -90,7 +93,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 2 - Translation Service | 1/1 | Complete | 2026-03-07 |
-| 3 - Settings UI | 0/1 | Not started | - |
+| 3 - Settings UI | 1/1 | Planned | - |
 | 4 - Display Integration | 0/1 | Not started | - |
 | 5 - Integration & Polish | 0/1 | Not started | - |
 

@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-03-07)
 
 ## Current Position
 
-Phase: 2 - Translation Service (plan 02-01 complete)
-Plan: 02-01 (TranslationService)
+Phase: 3 - Settings UI (plan 03-01 planned)
+Plan: 03-01 (Settings UI)
 Status: Plan complete
-Last activity: 2026-03-07 — TranslationService created
+Last activity: 2026-03-07 — Phase 3 plan created
 
 ## Milestone v1.1 Goals
 
@@ -46,5 +46,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-07
-Stopped at: Phase 2 context gathered — ready for planning
-Resume file: .planning/phases/02-translation-service/02-CONTEXT.md
+Stopped at: Phase 3 planned — ready for execution
+Resume file: .planning/phases/03-settings-ui/03-01-PLAN.md
