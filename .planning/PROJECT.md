@@ -17,12 +17,13 @@ Users can export their speech-to-text transcripts from Listen sessions to local 
 - ✓ SttView.getTranscriptText() returns formatted text — existing
 - ✓ Copy functionality in ListenView.handleCopy() — existing
 - ✓ IPC pattern (ipcMain.handle / ipcRenderer.invoke) — existing
+- ✓ User can save transcript to local .txt file via Save button — v1.0
+- ✓ Save dialog allows choosing file location and name — v1.0
+- ✓ Transcript text is written to selected file — v1.0
 
 ### Active
 
-- [ ] User can save transcript to local .txt file via Save button
-- [ ] Save dialog allows choosing file location and name
-- [ ] Transcript text is written to selected file
+(None — v1.0 shipped)
 
 ### Out of Scope
 
@@ -38,11 +39,11 @@ Users can export their speech-to-text transcripts from Listen sessions to local 
 - IPC communication via featureBridge.js and preload.js
 - Copy functionality already implemented as reference implementation
 
-**Relevant Prior Work:**
-- Transcript data already stored: `SttView.sttMessages` array
-- Text extraction method exists: `SttView.getTranscriptText()` (lines 191-193)
-- Copy to clipboard exists: `ListenView.handleCopy()` (lines 561-592)
-- IPC pattern established: `ipcMain.handle()` in featureBridge.js, `ipcRenderer.invoke()` in preload.js
+**Current State (v1.0 shipped):**
+- Save Transcript feature implemented in:
+  - `src/bridge/featureBridge.js` — IPC handler for file save
+  - `src/preload.js` — listenView.saveTranscript API
+  - `src/ui/listen/ListenView.js` — Save button with success/error states
 
 ## Constraints
 
@@ -55,9 +56,11 @@ Users can export their speech-to-text transcripts from Listen sessions to local 
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Use native Save dialog | Standard OS UX, ensures valid file path | — Pending |
-| Export as .txt | Simplest implementation, universal compatibility | — Pending |
-| Follow Copy button pattern | Consistent UI, proven IPC pattern | — Pending |
+| Use native Save dialog | Standard OS UX, ensures valid file path | ✓ Good — Works as expected |
+| Export as .txt | Simplest implementation, universal compatibility | ✓ Good — Users can open anywhere |
+| Follow Copy button pattern | Consistent UI, proven IPC pattern | ✓ Good — Reduced implementation time |
+| Default filename format | transcript-{YYYY-MM-DD-HHMM}.txt | ✓ Good — Clear and timestamped |
 
 ---
-*Last updated: 2026-03-07 after initialization*
+
+*Last updated: 2026-03-07 after v1.0 milestone*
