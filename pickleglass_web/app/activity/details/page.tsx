@@ -88,6 +88,7 @@ function SessionDetailsContent() {
           // Auto-trigger translation if enabled and transcripts exist
           if (translationEnabled && details.transcripts && details.transcripts.length > 0) {
             setShowTranslation(true);
+            setIsTranslating(true);
             for (const item of details.transcripts) {
               await fetchTranslation(item.text, item.id);
             }
