@@ -1,238 +1,437 @@
-# Architecture Research
+# Architecture Research: Translation Feature
 
-**Domain:** Electron Desktop App - File Save Integration
+**Domain:** Electron Desktop App - Translation Integration
 **Researched:** 2026-03-07
 **Confidence:** HIGH
 
-## Standard Architecture
+## Executive Summary
 
-### System Overview
+Translation integrates into existing Electron multi-window architecture by adding:
+- A new `TranslationService` in `src/features/listen/translation/` (reusing existing AI provider patterns)
+- Settings storage via electron-store (same as model settings)
+- A new UI toggle in SettingsView (following existing settings patterns)
+- Translated transcript display in SttView (extending existing transcript flow)
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Renderer Process                         │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
-│  │ ListenView │  │  SttView    │  │  Copy/Save Buttons  │  │
-│  └──────┬──────┘  └──────┬──────┘  └──────────┬──────────┘  │
-│         │                │                     │              │
-│         └────────────────┼─────────────────────┘              │
-│                          │                                    │
-│                    ┌─────▼─────┐                              │
-│                    │  preload  │                              │
-│                    │    api    │                              │
-│                    └─────┬─────┘                              │
-└──────────────────────────┼──────────────────────────────────┘
-                           │ ipcRenderer.invoke()
-┌──────────────────────────┼──────────────────────────────────┐
-│                     Main Process                             │
-├──────────────────────────┼──────────────────────────────────┤
-│                    ┌─────▼─────┐                              │
-│                    │featureBridge│  ← IPC handlers           │
-│                    └─────┬─────┘                              │
-│         ┌────────────────┼────────────────┐                  │
-│   ┌─────▼─────┐    ┌─────▼─────┐    ┌─────▼─────┐           │
-│   │  dialog   │    │    fs     │    │  Service  │           │
-│   │(showSave)│    │(writeFile)│    │  Layer    │           │
-│   └───────────┘    └───────────┘    └───────────┘           │
-└─────────────────────────────────────────────────────────────┘
-```
+The translation feature follows the same IPC patterns as Save Transcript (v1.0) and uses existing AI provider infrastructure (OpenAI, Gemini, Anthropic) for the actual translation API calls.
 
-### Component Responsibilities
+---
 
-| Component | Responsibility | Implementation |
-|-----------|----------------|----------------|
-| `preload.js` | Exposes secure IPC bridge via contextBridge | Maps `ipcRenderer.invoke()` calls to named channels |
-| `featureBridge.js` | Registers `ipcMain.handle()` handlers | Routes requests to appropriate services |
-| `ListenView.js` | UI component with Copy/Save buttons | Gets transcript text, calls preload API |
-| `SttView.js` | Manages transcript data | Stores `sttMessages` array, provides `getTranscriptText()` |
-| `dialog` (Electron) | Native file save dialog | `dialog.showSaveDialog()` for file path |
-| `fs` (Node) | File system operations | `fs.writeFile()` / `fs.writeFileSync()` for writing |
+## Architecture Overview
 
-## Recommended Project Structure
+### System Architecture
 
 ```
-src/
-├── bridge/
-│   └── featureBridge.js     # Add new IPC handler here
-├── features/
-│   └── listen/
-│       └── listenService.js # Optional: file save logic could go here
-├── ui/
-│   └── listen/
-│       └── ListenView.js    # Add Save button here
-└── preload.js               # Add new API endpoint here
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         Renderer Process                                 │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────────┐ │
+│  │   SettingsView  │    │   ListenView     │    │      SttView       │ │
+│  │                 │    │                  │    │                    │ │
+│  │ - Translation   │    │ - Translation   │    │ - Original text    │ │
+│  │   toggle        │    │   toggle (opt)  │    │ - Translated text  │ │
+│  │ - Target lang   │    │                  │    │ - Dual display     │ │
+│  │   selector      │    │                  │    │                    │ │
+│  └────────┬────────┘    └────────┬─────────┘    └────────┬─────────┘ │
+│           │                       │                        │            │
+│           └───────────────────────┼────────────────────────┘            │
+│                                   │                                     │
+│                            ┌──────▼──────┐                              │
+│                            │   preload    │                              │
+│                            │     api     │                              │
+│                            └──────┬──────┘                              │
+└──────────────────────────────────┼──────────────────────────────────────┘
+                                   │ ipcRenderer.invoke()
+┌──────────────────────────────────┼──────────────────────────────────────┐
+│                         Main Process                                     │
+├──────────────────────────────────┼──────────────────────────────────────┤
+│                          ┌───────▼───────┐                              │
+│                          │featureBridge  │  ← IPC handlers              │
+│                          └───────┬───────┘                              │
+│              ┌───────────────────┼───────────────────┐                 │
+│    ┌─────────▼─────────┐  ┌─────▼─────┐  ┌─────────▼─────────┐       │
+│    │  TranslationSvc   │  │ Settings   │  │    SttService    │       │
+│    │                   │  │  Service   │  │                  │       │
+│    │ - translate()     │  │ - get/set │  │ - transcript     │       │
+│    │ - getLanguages()  │  │ translation│  │   storage        │       │
+│    │ - cache results   │  │   settings │  │                  │       │
+│    └─────────┬─────────┘  └──────┬──────┘  └──────────────────┘       │
+│              │                   │                                      │
+│    ┌─────────▼───────────────────▼─────────┐                           │
+│    │        AI Provider Factory             │                           │
+│    │  (OpenAI / Gemini / Anthropic)        │                           │
+│    └────────────────────────────────────────┘                           │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Structure Rationale
+---
 
-- **featureBridge.js:** Natural place for IPC handlers - follows existing pattern for all feature operations
-- **ListenView.js:** UI component that already has Copy button - adding Save button maintains consistency
-- **preload.js:** Already exposes organized API namespaces per component - new `saveTranscript` method fits in `listenView` namespace
+## New Components Required
 
-## Architectural Patterns
+### 1. TranslationService (`src/features/listen/translation/translationService.js`)
 
-### Pattern 1: IPC Request-Response
+**Responsibility:** Handles translation API calls and caching
 
-**What:** Renderer invokes main process handler, waits for result
-**When:** Any operation requiring main process privileges (file system, native dialogs)
-**Trade-offs:** Secure (context isolation) but async/requires error handling
+**Key Methods:**
+- `translate(text, targetLang, sourceLang?)` - Main translation function
+- `getAvailableLanguages()` - Returns supported languages
+- `translateBatch(messages, targetLang)` - Batch translate transcript messages
 
-**Example:**
+**Integration:**
+- Uses existing AI provider factory (same pattern as summaryService)
+- Reuses modelStateService for API key management
+- Stores translations in memory during session (no persistence needed)
+
+### 2. Settings Integration
+
+**Location:** `electron-store` (existing pattern)
+
+**Settings keys:**
 ```javascript
-// Renderer (ListenView.js)
-const text = sttView.getTranscriptText();
-const result = await window.api.listenView.saveTranscript(text);
-
-// Preload (preload.js) - listensView namespace
-saveTranscript: (text) => ipcRenderer.invoke('listen:saveTranscript', text)
-
-// Main (featureBridge.js)
-ipcMain.handle('listen:saveTranscript', async (event, text) => {
-  // Use dialog.showSaveDialog() + fs.writeFile()
-});
-```
-
-### Pattern 2: Native Dialog Pattern
-
-**What:** Use Electron's dialog module for OS-native file picker
-**When:** Need user to select file path/location
-**Trade-offs:** Best UX but requires main process
-
-**Example:**
-```javascript
-const { dialog } = require('electron');
-const { writeFile } = require('fs/promises');
-
-const result = await dialog.showSaveDialog({
-  title: 'Save Transcript',
-  defaultPath: 'transcript.txt',
-  filters: [{ name: 'Text Files', extensions: ['txt'] }]
-});
-
-if (!result.canceled && result.filePath) {
-  await writeFile(result.filePath, text, 'utf-8');
+{
+  translationEnabled: boolean,    // Default: false
+  targetLanguage: string,        // Default: 'en'
+  translationProvider: string    // Default: 'openai' (uses existing API keys)
 }
 ```
 
-### Pattern 3: Service Handler Pattern
+### 3. Preload API Extensions
 
-**What:** Feature services contain both business logic and IPC handler wrapper
-**When:** Complex operations that warrant service abstraction
-**Trade-offs:** Clean separation but more files
+**File:** `src/preload.js`
 
-**Example (existing pattern):**
+**New APIs to add:**
 ```javascript
-// listenService.js
-async handleSaveTranscript(text) {
-  // Business logic here
+// settingsView namespace
+settingsView: {
+  getTranslationSettings: () => ipcRenderer.invoke('settings:get-translation'),
+  setTranslationEnabled: (enabled) => ipcRenderer.invoke('settings:set-translation-enabled', enabled),
+  setTargetLanguage: (lang) => ipcRenderer.invoke('settings:set-target-language', lang),
 }
 
-// featureBridge.js
-ipcMain.handle('listen:saveTranscript',
-  async (event, text) => await listenService.handleSaveTranscript(text));
+// listenView namespace (optional - trigger translation manually)
+listenView: {
+  translateTranscript: (text) => ipcRenderer.invoke('listen:translate-transcript', text),
+}
 ```
 
-## Data Flow
+### 4. FeatureBridge Handlers
 
-### Save Transcript Flow
+**File:** `src/bridge/featureBridge.js`
 
-```
-[User clicks Save]
-    ↓
-[ListenView.handleSave()] ──► [SttView.getTranscriptText()]
-    ↓
-[window.api.listenView.saveTranscript(text)]
-    ↓
-[preload.js]  ──────────► ipcRenderer.invoke('listen:saveTranscript', text)
-    ↓
-[featureBridge.js] ──────► ipcMain.handle('listen:saveTranscript')
-    ↓
-[dialog.showSaveDialog()] ──► User selects location
-    ↓
-[fs.writeFile()] ──────────► File written to disk
-    ↓
-[Result returned to renderer] ──► UI shows success/failure
+**New handlers:**
+```javascript
+// Translation settings
+ipcMain.handle('settings:get-translation', async () => await settingsService.getTranslationSettings());
+ipcMain.handle('settings:set-translation-enabled', async (event, enabled) => await settingsService.setTranslationEnabled(enabled));
+ipcMain.handle('settings:set-target-language', async (event, lang) => await settingsService.setTargetLanguage(lang));
+
+// Translation execution
+ipcMain.handle('listen:translate-transcript', async (event, { text, targetLang }) =>
+  await translationService.translate(text, targetLang));
 ```
 
-### Key Data Flows
+---
 
-1. **Transcript Retrieval:** SttView.sttMessages (array) → getTranscriptText() → formatted string
-2. **IPC Communication:** Renderer (preload api) → ipcRenderer.invoke → featureBridge → Service
-3. **File Operation:** Main process receives text → shows dialog → writes file → returns result
+## Integration Points with Existing System
 
-## Scaling Considerations
+### Integration Point 1: electron-store (Settings)
 
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 0-1k users | Single handler fine, no optimization needed |
-| 1k-100k users | Consider async file writes, non-blocking UI |
-| 100k+ users | File I/O already isolated to main process - no changes needed |
+**Existing:** `src/features/settings/settingsService.js`
 
-### Scaling Priorities
+**Changes needed:**
+- Add translation settings to default settings object
+- Add getter/setter methods for translation settings
+- Settings automatically persist via existing electron-store
 
-1. **First bottleneck:** Large transcript files blocking UI - **Mitigation:** Already async via IPC
-2. **Second bottleneck:** Disk I/O speed - **Mitigation:** User's local disk, not controllable
+**Code location:** Lines 202-219 in settingsService.js (getDefaultSettings)
 
-## Anti-Patterns
+### Integration Point 2: SttView (Transcript Display)
 
-### Anti-Pattern 1: Direct File System Access from Renderer
+**Existing:** `src/ui/listen/stt/SttView.js`
 
-**What people do:** Try to use Node.js `fs` directly in renderer process
-**Why it's wrong:** Renderer runs in sandboxed web context, no direct Node access
-**Do this instead:** Use IPC to invoke main process file operations
+**Changes needed:**
+- Add `translatedMessages` property (mirrors `sttMessages` structure)
+- Add toggle to show/hide translations
+- Render both original and translated text (or toggle between them)
 
-### Anti-Pattern 2: Blocking Dialogs
+**Current flow:**
+```
+Speech → sttService → IPC 'stt-update' → SttView.sttMessages → render()
+```
 
-**What people do:** Use synchronous dialog APIs that block the event loop
-**Why it's wrong:** Freezes UI, poor user experience
-**Do this instead:** Use async `dialog.showSaveDialog()` with await
+**New flow with translation:**
+```
+Speech → sttService → IPC 'stt-update' → SttView.sttMessages
+                                      ↓
+                              (if translation enabled)
+                                      ↓
+                            translationService.translate()
+                                      ↓
+                            SttView.translatedMessages
+                                      ↓
+                                   render()
+```
 
-### Anti-Pattern 3: Skipping Error Handling
+### Integration Point 3: SettingsView (UI)
 
-**What people do:** Assume file save always succeeds
-**Why it's wrong:** Disk full, permissions denied, user cancels - all common failure modes
-**Do this instead:** Always check dialog result.canceled and wrap writeFile in try-catch
+**Existing:** `src/ui/settings/SettingsView.js`
 
-## Integration Points
+**Changes needed:**
+- Add translation toggle button (similar to auto-update toggle)
+- Add target language dropdown selector
+- Load/save settings via preload API
 
-### External Services
+**Pattern to follow:** See `handleToggleAutoUpdate()` method (lines 559-576)
 
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| Electron dialog | Import in main process | `const { dialog } = require('electron')` |
-| Node fs | Import in main process | `const fs = require('fs')` or `const { writeFile } = require('fs/promises')` |
+### Integration Point 4: AI Provider Factory
 
-### Internal Boundaries
+**Existing:** `src/features/common/ai/factory.js`
 
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| Renderer ↔ Main | IPC via preload | Uses contextBridge for security |
-| featureBridge ↔ Service | Direct function call | Services are plain JS modules |
+**Changes needed:**
+- No changes needed - translation reuses existing LLM providers
+- TranslationService will call `createLLM()` with translation prompt
 
-## Implementation Build Order
+---
 
-Based on existing architecture patterns, recommended implementation order:
+## Data Flow Changes
 
-1. **Add IPC handler in featureBridge.js** - Register `listen:saveTranscript` handler
-2. **Add preload API in preload.js** - Expose `listenView.saveTranscript()` to renderer
-3. **Add Save button in ListenView.js** - Similar to Copy button, call preload API
-4. **Handle response in ListenView** - Show success/error feedback to user
+### Original Transcript Flow
+```
+User speaks → Microphone → Audio capture → STT API → transcript text
+                                                      ↓
+                                              SttView.sttMessages[]
+                                                      ↓
+                                                   Render
+```
 
-### Dependencies
+### New Flow with Translation
+```
+User speaks → Microphone → Audio capture → STT API → transcript text
+                                                      ↓
+                                              SttView.sttMessages[]
+                                    (if translation enabled)
+                                                      ↓
+                                    Get text → TranslationService.translate()
+                                                      ↓
+                                              Translated text
+                                                      ↓
+                              SttView.translatedMessages OR display toggle
+                                                      ↓
+                                                   Render
+```
 
-- **Phase 1:** featureBridge.js handler (no dependencies)
-- **Phase 2:** preload.js API (depends on handler existing)
-- **Phase 3:** ListenView button (depends on preload API)
-- **Phase 4:** Error handling UI (depends on button)
+### Settings Change Flow
+```
+User toggles translation in Settings
+        ↓
+SettingsView calls window.api.settingsView.setTranslationEnabled(true)
+        ↓
+preload.js → ipcRenderer.invoke('settings:set-translation-enabled', true)
+        ↓
+featureBridge.js → ipcMain.handle('settings:set-translation-enabled')
+        ↓
+settingsService.setTranslationEnabled(true) → electron-store
+        ↓
+Broadcast 'settings-updated' event to all windows
+        ↓
+ListenView receives event → enables translation for new transcripts
+```
+
+---
+
+## Component Boundaries
+
+| Component | Responsibility | Communicates With |
+|-----------|----------------|-------------------|
+| `translationService.js` | Translation API calls, caching | AI factory, settingsService |
+| `settingsService.js` | Persist/retrieve translation settings | electron-store, featureBridge |
+| `SettingsView.js` | Render translation settings UI | preload API |
+| `SttView.js` | Display original + translated text | ListenView, IPC events |
+| `featureBridge.js` | Route translation IPC requests | main process services |
+| `preload.js` | Expose translation APIs to renderer | contextBridge |
+
+---
+
+## Build Order (Recommended)
+
+### Phase 1: Backend Infrastructure
+1. **Add translation settings to electron-store** (settingsService.js)
+   - Add default translation settings
+   - Add getter/setter methods
+2. **Add IPC handlers** (featureBridge.js)
+   - Register translation settings handlers
+   - Register translation execution handler
+
+**Rationale:** No UI dependencies, can be built and tested independently.
+
+### Phase 2: Preload API
+3. **Expose translation APIs** (preload.js)
+   - Add settingsView.getTranslationSettings()
+   - Add settingsView.setTranslationEnabled()
+   - Add settingsView.setTargetLanguage()
+
+**Rationale:** Depends on IPC handlers existing.
+
+### Phase 3: Translation Service
+4. **Create TranslationService** (new file)
+   - Implement translate() using AI provider factory
+   - Implement getAvailableLanguages()
+   - Add simple in-memory caching
+
+**Rationale:** Depends on AI factory pattern (already exists).
+
+### Phase 4: UI Integration
+5. **Add translation settings UI** (SettingsView.js)
+   - Add toggle button (similar to auto-update)
+   - Add language selector dropdown
+6. **Extend SttView for translations** (SttView.js)
+   - Add translatedMessages property
+   - Add translation toggle in UI
+   - Render translated text alongside/instead of original
+
+**Rationale:** Depends on preload APIs and service.
+
+### Phase 5: Integration & Polish
+7. **Wire up settings change listener** in ListenView
+8. **Add translation loading indicator**
+9. **Error handling** - show error state if translation fails
+
+---
+
+## Architectural Patterns to Follow
+
+### Pattern 1: Service Handler with IPC Wrapper
+
+TranslationService follows the same pattern as summaryService:
+
+```javascript
+// translationService.js
+async translate(text, targetLang, sourceLang = 'auto') {
+  const provider = await modelStateService.getSelectedLLMProvider();
+  const apiKey = await modelStateService.getApiKey(provider);
+
+  const llm = createLLM({ apiKey, model: 'gpt-4.1' });
+
+  const prompt = `Translate the following text to ${targetLang}.
+If source language is specified, translate from ${sourceLang} to ${targetLang}.
+
+Text to translate:
+${text}`;
+
+  const result = await llm.generateContent([prompt]);
+  return result.response.text();
+}
+```
+
+### Pattern 2: Settings Listener Pattern
+
+ListenView should listen for settings changes (existing pattern):
+
+```javascript
+// In ListenView connectedCallback()
+window.api.settingsView.onSettingsUpdated((event, settings) => {
+  if (settings.translationEnabled !== undefined) {
+    this.translationEnabled = settings.translationEnabled;
+    this.requestUpdate();
+  }
+});
+```
+
+### Pattern 3: Dual Display Pattern
+
+SttView can show both original and translated (or toggle):
+
+```javascript
+// In SttView render()
+return html`
+  <div class="transcription-container">
+    ${this.sttMessages.map(msg => html`
+      <div class="stt-message ${this.getSpeakerClass(msg.speaker)}">
+        <div class="original-text">${msg.text}</div>
+        ${this.translationEnabled && this.translatedMessages?.get(msg.id) ? html`
+          <div class="translated-text">${this.translatedMessages.get(msg.id)}</div>
+        ` : ''}
+      </div>
+    `)}
+  </div>
+`;
+```
+
+---
+
+## Anti-Patterns to Avoid
+
+### Anti-Pattern 1: Translation During Speech Recognition
+
+**What:** Try to translate each partial transcript in real-time
+**Why bad:** Too many API calls, partial text translation is poor quality
+**Instead:** Translate only final transcripts, or batch translate on session end
+
+### Anti-Pattern 2: Storing Translations Persistently
+
+**What:** Save translations to database/file
+**Why bad:** Unnecessary complexity, translations are session-specific
+**Instead:** Keep translations in memory during session only
+
+### Anti-Pattern 3: Blocking UI During Translation
+
+**What:** Make synchronous translation API call
+**Why bad:** Freezes UI, poor UX
+**Instead:** Use async/await, show loading indicator
+
+### Anti-Pattern 4: New Translation API Key
+
+**What:** Require user to get a new API key for translation
+**Why bad:** Friction for users, existing keys already work
+**Instead:** Reuse existing LLM API keys (OpenAI/Gemini/Anthropic)
+
+---
+
+## Scalability Considerations
+
+| Scale | Approach |
+|-------|----------|
+| 0-100 users | Single translation call per message |
+| 100-10K users | Batch translations, add caching |
+| 10K+ users | Consider translation queue, rate limiting |
+
+### Translation Caching
+
+For efficiency, implement simple caching:
+
+```javascript
+// In translationService
+const translationCache = new Map();
+
+async translate(text, targetLang) {
+  const cacheKey = `${text.slice(0, 50)}:${targetLang}`;
+
+  if (translationCache.has(cacheKey)) {
+    return translationCache.get(cacheKey);
+  }
+
+  const result = await callTranslationAPI(text, targetLang);
+  translationCache.set(cacheKey, result);
+
+  return result;
+}
+```
+
+---
 
 ## Sources
 
 - [Electron IPC Documentation](https://www.electronjs.org/docs/latest/api/ipc-main)
-- [Electron dialog.showSaveDialog](https://www.electronjs.org/docs/latest/api/dialog)
 - [Electron contextBridge](https://www.electronjs.org/docs/latest/api/context-bridge)
-- Context7: electron - IPC patterns
+- Existing codebase patterns in:
+  - `src/features/listen/summary/summaryService.js` - AI service pattern
+  - `src/features/common/ai/providers/openai.js` - LLM provider pattern
+  - `src/features/settings/settingsService.js` - Settings pattern
+  - `src/ui/settings/SettingsView.js` - Settings UI pattern
+- Context7: electron, openai, lit (web components)
 
 ---
-*Architecture research for: Save Transcript to File Feature*
+
+*Architecture research for: Translation Feature (v1.1)*
 *Researched: 2026-03-07*

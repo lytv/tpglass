@@ -1,128 +1,157 @@
 # Project Research Summary
 
-**Project:** PickleGlass - Save Transcript to File Feature
-**Domain:** Electron Desktop App File Save Functionality
+**Project:** Translation Feature (v1.1)
+**Domain:** Electron Desktop App - Translation Integration
 **Researched:** 2026-03-07
 **Confidence:** HIGH
 
 ## Executive Summary
 
-This research addresses the Save Transcript to File feature for PickleGlass, an Electron-based desktop transcription app. The feature allows users to export their transcribed content to local files. Research indicates this is a straightforward implementation using Electron's built-in APIs (dialog.showSaveDialog and fs.promises) with existing IPC patterns already established in the codebase. No additional dependencies are required. The implementation follows a well-documented pattern: renderer invokes preload API, which sends IPC to main process, which shows native dialog and writes file. Five critical pitfalls were identified, all preventable with proper error handling and IPC architecture. The feature has clear table stakes (native dialog, feedback) and differentiation opportunities (.md export).
+This research synthesizes findings for adding translation capability to the existing PickleGlass speech-to-text Electron app. The translation feature integrates with the current architecture by reusing existing OpenAI SDK, electron-store for settings, and established IPC patterns. No new dependencies are required.
+
+The recommended approach uses OpenAI's chat completions API (gpt-4o-mini) for translation, which reuses existing API keys and infrastructure already in place for STT. The feature follows a 5-phase build order: backend infrastructure (settings storage, IPC handlers), preload API, translation service, UI integration (settings and display), then integration testing.
+
+Key risks identified: translation latency breaking real-time UX expectations, cascading STT errors through translation pipeline, uncontrolled API costs, and lack of graceful degradation when translation APIs fail. These must be addressed in specific phases to prevent user-facing issues.
 
 ## Key Findings
 
 ### Recommended Stack
 
-Research confirms Electron's built-in APIs are sufficient. No external libraries needed.
-
 **Core technologies:**
-- **Electron dialog.showSaveDialog** — Native OS file picker, provides macOS/Windows native UX, no dependencies
-- **Node.js fs.promises** — Asynchronous file writing, reliable and well-tested
-- **IPC (ipcMain.handle/ipcRenderer.invoke)** — Secure communication between renderer and main process
+- **OpenAI Chat Completions API (gpt-4o-mini)** — Text translation via chat prompts. Already integrated in app, supports 100+ languages, cost-effective at $0.15/million input tokens.
+- **Existing openai SDK (^4.70.0)** — API client already in use, no new dependencies.
+- **Existing electron-store** — Settings storage for translation enable/disable and target language preference.
+- **Existing IPC pattern** — Main-renderer communication already proven in codebase.
 
-The implementation reuses the existing IPC pattern already present in featureBridge.js, following the same approach as the Copy button functionality.
+**No new packages required for v1.1 MVP.** Uses existing infrastructure exclusively.
 
 ### Expected Features
 
 **Must have (table stakes):**
-- Native save dialog — Users expect OS-native file picker
-- File type filter (.txt default) — Users select file type via filters option
-- Default filename suggestion — Reduces friction with timestamp-based names like `transcript-2026-03-07.txt`
-- Success/error feedback — Confirms action completed or shows error with reason
-- Keyboard shortcut (Cmd+S) — Power user expectation
+- **Translation toggle** — Enable/disable in Settings. Users expect control over whether translation runs.
+- **Target language selector** — Users must specify target language. Reuse existing language picker UI.
+- **Translated transcript display** — Core value proposition. Show translated text in ListenView.
+- **Error handling** — Show error messages when translation fails, allow retry.
 
 **Should have (competitive):**
-- Markdown export (.md) — Differentiator, preserves formatting, popular in notes apps
-- Remember last save location — Faster repeat saves via electron-store
-- Copy path to clipboard — Easy file location reference
+- **Side-by-side view** — Compare original and translation. Desktop has screen space.
+- **Copy translation button** — Quick export to clipboard. Complementary to Save Transcript.
+- **Translation status indicator** — "Translating..." during API call manages expectations.
 
 **Defer (v2+):**
-- PDF export — Requires additional libraries, high complexity
-- Cloud storage integration — Adds auth/sync complexity
-- Auto-save — Creates file management issues
-- Batch export — Only if users request
+- **Real-time translation during speech** — Requires WebSocket/polling, increases complexity significantly.
+- **Offline translation** — Requires local ML model (100MB+), not needed for v1.1.
+- **Audio-to-audio (speech-to-speech)** — Requires TTS synthesis, out of scope.
 
 ### Architecture Approach
 
-The system follows a clear layered architecture:
+The translation feature extends existing Electron multi-window architecture:
 
-1. **ListenView.js** — UI component with Save button, retrieves transcript text via SttView.getTranscriptText()
-2. **preload.js** — Exposes secure IPC bridge via contextBridge, maps invoke calls to named channels
-3. **featureBridge.js** — Registers ipcMain.handle() handlers, routes to dialog/fs operations
-4. **Electron dialog + fs** — Main process performs privileged operations
+**Major components:**
+1. **TranslationService** (`src/features/listen/translation/translationService.js`) — Handles translation API calls using existing AI provider factory, includes caching for efficiency.
+2. **SettingsService extension** — Stores translation preferences (enabled, targetLanguage) in electron-store.
+3. **Preload API extensions** — Exposes translation settings and execution to renderer via contextBridge.
+4. **FeatureBridge handlers** — Routes translation IPC requests in main process.
+5. **SttView extension** — Displays original + translated text with toggle option.
 
-Data flow: User clicks Save -> ListenView gets transcript text -> preload API invokes IPC -> featureBridge shows dialog -> fs writes file -> result returned to renderer.
+**Key pattern:** TranslationService follows same pattern as existing summaryService, reusing modelStateService for API key management and createLLM() for API calls.
 
 ### Critical Pitfalls
 
-1. **Renderer Cannot Access File System** — contextIsolation blocks direct fs access. Must use IPC to main process.
-2. **Not Handling Dialog Cancellation** — Check both `canceled` and `!filePath` before writing.
-3. **Race Condition - Window Destroyed While Dialog Open** — Verify window exists via `win.isDestroyed()` before using.
-4. **Not Handling File Write Errors** — Wrap fs.writeFile in try/catch, return error status to renderer.
-5. **Missing Default File Extension** — Set defaultPath with .txt extension to prevent "can't find my file".
+1. **Translation latency breaks real-time expectation** — Translation adds 200-2000ms API latency. Show original immediately, translated text asynchronously. Add "translating..." indicator.
+
+2. **Cascading STT errors through translation** — STT misrecognitions get locked in. Add visual indicator showing original is editable before translation.
+
+3. **Uncontrolled API costs** — Per-character pricing can spiral. Add character count display, implement caching, add "translate on demand" option.
+
+4. **No graceful degradation when API fails** — Network issues or quota exceeded crashes app. Always return original text with error indicator when translation fails.
+
+5. **Blocking main thread during translation** — Synchronous calls freeze UI. Always use async/await, show loading indicator.
 
 ## Implications for Roadmap
 
-Based on research, the implementation is straightforward and can be completed in a single phase with careful attention to error handling.
+Based on research, suggested phase structure:
 
-### Phase 1: Save Transcript to File
-**Rationale:** This is the core feature. Implementation order is determined by architectural dependencies: IPC handler must exist before preload API, which must exist before UI button.
+### Phase 1: Backend Infrastructure
+**Rationale:** No UI dependencies, can be built and tested independently.
+**Delivers:** Translation settings in electron-store, IPC handlers in featureBridge.
+**Addresses:** Settings storage, error handling foundation.
+**Avoids:** PITFALL #4 (no graceful degradation) — handlers include try/catch.
 
-**Delivers:**
-- Native save dialog with .txt filter
-- Default filename with timestamp (e.g., transcript-2026-03-07-1430.txt)
-- Save button in ListenView (similar to Copy button)
-- Success/error feedback in UI
+### Phase 2: Preload API
+**Rationale:** Depends on IPC handlers from Phase 1.
+**Delivers:** Exposed translation APIs via contextBridge.
+**Addresses:** Enables renderer to access translation functionality.
+**Uses:** Existing IPC pattern from preload.js.
 
-**Addresses features from FEATURES.md:**
-- Native save dialog (P1)
-- File type filter (P1)
-- Default filename (P1)
-- Success/error feedback (P1)
-- Transcript text extraction via existing SttView.getTranscriptText()
+### Phase 3: Translation Service
+**Rationale:** Depends on AI provider factory already in codebase.
+**Delivers:** TranslationService with translate(), getAvailableLanguages(), caching.
+**Implements:** AI provider integration following summaryService pattern.
+**Avoids:** PITFALL #3 (API costs) — implement caching in service. PITFALL #5 (blocking UI) — all calls async.
 
-**Avoids pitfalls from PITFALLS.md:**
-- Uses IPC to bypass contextIsolation restriction
-- Handles dialog cancellation explicitly
-- Window validity check before dialog
-- Try/catch around file write
-- DefaultPath includes .txt extension
+### Phase 4: Settings UI Integration
+**Rationale:** Depends on preload APIs and service.
+**Delivers:** Translation toggle, target language dropdown in SettingsView.
+**Implements:** Settings UI following existing auto-update toggle pattern.
+**Avoids:** Settings not wired to functionality.
+
+### Phase 5: ListenView Display Integration
+**Rationale:** Depends on all previous phases.
+**Delivers:** Translated transcript display with toggle between original/translated.
+**Implements:** SttView extension with dual display.
+**Avoids:** PITFALL #1 (latency breaking UX) — show original immediately, translate async. PITFALL #2 (STT error propagation) — show original editable.
+
+### Phase Ordering Rationale
+
+- **Phase 1-2 before 3:** Backend and API must exist before service implementation
+- **Phase 3 before 4-5:** Service must work before UI consumes it
+- **Service (Phase 3) after settings (Phase 1):** Translation needs to know target language from settings
+- **Grouping by dependency:** Backend infrastructure isolated first, then service, then UI
+- **Pitfall mitigation spread across phases:** Cost controls in Phase 3, graceful degradation in Phase 1-3, latency handling in Phase 5
 
 ### Research Flags
 
-Phases with standard patterns (skip research-phase):
-- **Phase 1:** Well-documented Electron IPC patterns, official API docs available, existing codebase examples (Copy button)
+Phases likely needing deeper research during planning:
+- **Phase 5 (Display Integration):** Complex UI state management for dual display, may need additional research on Lit component patterns for translation toggle.
 
-No phases require deeper research - all aspects are covered by official Electron documentation and existing codebase patterns.
+Phases with standard patterns (skip research-phase):
+- **Phase 1-3:** Well-documented Electron patterns, reuse existing code patterns directly.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Uses built-in Electron APIs, verified with official docs |
-| Features | HIGH | Standard desktop export functionality, competitor analysis available |
-| Architecture | HIGH | Existing IPC pattern in codebase, follows established conventions |
-| Pitfalls | HIGH | All identified pitfalls have documented prevention strategies |
+| Stack | HIGH | Uses existing infrastructure (OpenAI SDK, electron-store, IPC). No new dependencies. Verified against existing codebase patterns. |
+| Features | HIGH | Based on competitor analysis (Otter.ai, Notta) and translation app UX best practices. Clear MVP scope defined. |
+| Architecture | HIGH | Researched existing code patterns in summaryService, settingsService, SttView. IPC patterns verified. |
+| Pitfalls | MEDIUM-HIGH | Based on general translation API integration patterns and Electron best practices. Some latency/cost issues are theoretical for this scale. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-No major gaps identified. The implementation is well-understood with clear patterns. If any uncertainty arises:
-- Test with contextIsolation: true (should work with IPC)
-- Verify on both macOS and Windows for dialog differences
+- **Language list source:** Need to verify whether to hardcode common languages or fetch from OpenAI. Recommend hardcoding top 20-30 languages for MVP.
+- **Translation quality validation:** No explicit testing of gpt-4o-mini translation quality vs dedicated translation APIs. May need user feedback loop.
+- **Caching invalidation:** Cache strategy needs testing — when should translations be re-fetched?
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Electron dialog.showSaveDialog API — Official documentation
-- Electron IPC Documentation — Official documentation
-- Electron contextBridge — Security patterns
-- Project codebase: featureBridge.js, preload.js, ListenView.js — Existing IPC patterns
+- Existing codebase: `src/features/common/ai/providers/openai.js` — OpenAI integration pattern
+- Existing codebase: `src/features/settings/settingsService.js` — Settings pattern
+- Existing codebase: `src/bridge/featureBridge.js` — IPC handler pattern
+- Existing codebase: `src/ui/settings/SettingsView.js` — Settings UI pattern
+- OpenAI Platform Documentation: https://platform.openai.com/docs/guides/text-generation
 
 ### Secondary (MEDIUM confidence)
-- UX Stack Exchange: Save vs Export — UX conventions
-- Competitor analysis: Otter.ai, Descript export features
+- Google Cloud Translation API Documentation — API limits, pricing comparison
+- Competitor analysis: Otter.ai, Notta translation features — Feature landscape
+- Translation API Best Practices — Caching, batching recommendations
+
+### Tertiary (LOW confidence)
+- UI Components for Translation Apps — UX patterns (general, not Electron-specific)
+- Toggle UX Best Practices — General design guidelines
 
 ---
 *Research completed: 2026-03-07*

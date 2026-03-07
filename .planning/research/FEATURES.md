@@ -1,6 +1,6 @@
 # Feature Research
 
-**Domain:** Desktop App Save/Export Text Content
+**Domain:** Speech-to-Text Translation Feature (v1.1)
 **Researched:** 2026-03-07
 **Confidence:** HIGH
 
@@ -12,12 +12,11 @@ Features users assume exist. Missing these = product feels incomplete.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Native save dialog | Standard OS UX, ensures valid file path | LOW | Electron's `dialog.showSaveDialog()` provides native macOS/Windows dialogs |
-| File type filter (.txt default) | Users expect to select file type | LOW | Use `filters` option: `[{ name: 'Text Files', extensions: ['txt'] }]` |
-| Default filename suggestion | Reduces friction, helps user identify content | LOW | Use `defaultPath` option, e.g., `transcript-2026-03-07.txt` |
-| Success feedback | Confirms action completed | LOW | Show brief "Saved!" state, similar to Copy button's 'copied' state |
-| Error handling | Users need to know if save failed | LOW | Show error message with reason, allow retry |
-| Keyboard shortcut | Power users expect Cmd+S / Ctrl+S | LOW | Add save shortcut mapped to same action |
+| Translation toggle (enable/disable) | Users need control over whether translation runs. Standard pattern in browsers (Chrome, Edge) and translation apps. Without toggle, feature feels invasive. | LOW | Follows existing settings pattern from v1.0 |
+| Target language selector | Users must specify what language to translate into. Not optional. | LOW | Can reuse existing language picker UI from STT settings |
+| Translated transcript display | Core value proposition. Users see translated text. | MEDIUM | Requires layout decision (split view vs toggle) |
+| Translation service integration | Need API to perform translation. Google Cloud Translation, Azure, or OpenAI. | MEDIUM | Existing STT uses API keys - reuse pattern |
+| Error handling for API failures | Translation APIs can fail (network, quota, invalid key). Users need feedback. | LOW | Show error in UI, allow retry |
 
 ### Differentiators (Competitive Advantage)
 
@@ -25,11 +24,11 @@ Features that set the product apart. Not required, but valuable.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Multiple export formats | Flexibility for different use cases | MEDIUM | Add .md (Markdown) export - preserves formatting, popular for notes apps |
-| Auto-generated filename | One-click export without dialog | LOW | Use timestamp + session title for filename, bypass dialog with `defaultPath` |
-| Export to Downloads folder | Quickest path to saved file | LOW | Remember last location or default to Downloads |
-| Copy path to clipboard | Easy to find saved file later | LOW | After save, optionally copy file path |
-| Quick export (no dialog) | Speed for repeated saves | LOW | Default to last-used location |
+| Side-by-side (split) original + translation | Allows users to compare original and translation. Improves trust in accuracy. | MEDIUM | Desktop app has screen space; mobile typically does toggle |
+| Auto-detect source language | Eliminates need to specify input language. Convenience factor. | LOW | Translation APIs (Google, Azure) support this |
+| Copy translation button | Quick export to clipboard. Complementary to Save Transcript feature. | LOW | Reuses existing copy pattern from ListenView |
+| Translation status indicator | Shows "Translating..." during API call. Manages expectations. | LOW | Prevents user confusion during latency |
+| Per-sentence translation toggle | Let user choose which sentences to translate. Fine-grained control. | HIGH | Complex UI; may be overkill for v1.1 |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
@@ -37,75 +36,80 @@ Features that seem good but create problems.
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Auto-save to file | "Don't make me click" | Creates file management issues, may save incomplete transcripts | Keep in-memory, let user explicitly save when ready |
-| PDF export | Professional look | Requires additional libraries, complex formatting | Offer .md export which can be converted |
-| Cloud storage export | Access anywhere | Adds auth complexity, sync issues, out of scope for v1 | Focus on local file export first |
-| Multiple file selection | "Save all sessions" | UI complexity, not requested | Defer to future if users ask |
+| Real-time (streaming) translation during speech | "Translate as I speak" | Adds significant complexity. Requires WebSocket/polling, handles partial results, increases latency concerns. | Translate completed transcript after speech ends |
+| Offline translation | "Work without internet" | Requires local ML model download (100MB+). Adds weight, complexity, may not work well. | Use API-based translation for v1.1 |
+| Audio-to-audio (speech-to-speech) translation | "Hear the translation" | Not in scope. Requires TTS synthesis, voice conversion. | Keep text-only translation |
+| Multi-target language (translate to multiple at once) | "See all languages" | UI complexity, API cost multiplication. | Single target language selector |
+| Translation history/persistence | "Keep translations for later" | Not requested. Would require database changes. | Translate current session only |
+| Auto-translate without user action | "Just translate everything" | Users may not want translation always on. Requires explicit enable. | Require toggle ON before translating |
 
 ## Feature Dependencies
 
 ```
-[Save Button UI]
-    └──requires──> [IPC Handler in Main Process]
-                       └──requires──> [Electron dialog.showSaveDialog]
-                                      └──requires──> [fs.writeFile]
+Existing: Listen (speech-to-text) → Transcript data available
+Existing: Settings system → Language preference storage
 
-[Default Filename Generation]
-    └──requires──> [Transcript Text Access]
-                       └──requires──> [SttView.getTranscriptText()]
-
-[Keyboard Shortcut]
-    └──requires──> [Save Button Logic]
+New: Translation toggle (Settings)
+     ↓
+New: Target language selector (Settings)
+     ↓
+New: Translation service integration (main process)
+     ↓
+New: Translated transcript display (ListenView)
 ```
 
 ### Dependency Notes
 
-- **Save button requires IPC handler:** Must add `ipcMain.handle()` in main process to show dialog and write file
-- **Default filename enhances UX:** Generate from session date/time, requires access to session metadata
-- **Keyboard shortcut requires save logic:** Shortcut should trigger same flow as button click
+- **Translation toggle requires settings storage:** Use existing electron-store pattern from v1.0
+- **Target language selector requires language list:** Can source from translation API or hardcode common languages
+- **Translation service requires IPC:** Add `ipcMain.handle()` for translation, similar to save-transcript
+- **Display requires state management:** Track original + translated text, toggle between them
 
 ## MVP Definition
 
-### Launch With (v1)
+### Launch With (v1.1)
 
 Minimum viable product — what's needed to validate the concept.
 
-- [ ] **Native save dialog** — Use Electron's `dialog.showSaveDialog()` with `.txt` filter
-- [ ] **Default filename** — Generate from session timestamp, e.g., `transcript-2026-03-07-1430.txt`
-- [ ] **Save button in UI** — Add to Listen view, similar placement to Copy button
-- [ ] **Success/error feedback** — Visual feedback after save completes
-- [ ] **Transcript text extraction** — Reuse existing `SttView.getTranscriptText()` method
+- [ ] **Translation toggle in Settings** — Enable/disable translation globally
+- [ ] **Target language selector in Settings** — Dropdown for target language
+- [ ] **Translation service integration** — API call to translate transcript text
+- [ ] **Translated transcript display in Listen view** — Show translation below or toggle with original
+- [ ] **Error handling** — Show error message if translation fails
 
 ### Add After Validation (v1.x)
 
 Features to add once core is working.
 
-- [ ] **Keyboard shortcut (Cmd+S)** — Power user expectation, quick iteration
-- [ ] **Markdown export (.md)** — Popular format for notes apps, preserves structure
-- [ ] **Remember last save location** — electron-store preference, faster repeat saves
+- [ ] **Copy translation button** — Quick action to copy translated text
+- [ ] **Translation status indicator** — "Translating..." during API call
+- [ ] **Auto-detect source language** — Use API's language detection
+- [ ] **Split view (side-by-side)** — Show original and translation together
 
 ### Future Consideration (v2+)
 
 Features to defer until product-market fit is established.
 
-- [ ] **PDF export** — Requires additional libraries, complex formatting
-- [ ] **Batch export (all sessions)** — Only if users request it
-- [ ] **Cloud storage integration** — Out of scope for v1
-- [ ] **Auto-save** — Creates file management complexity
+- [ ] **Real-time translation during speech** — Streaming translation
+- [ ] **Multiple target languages** — Translate to several languages at once
+- [ ] **Translation history** — Store past translations
+- [ ] **Offline translation** — Local ML model
 
 ## Feature Prioritization Matrix
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Native save dialog | HIGH | LOW | P1 |
-| Save button in UI | HIGH | LOW | P1 |
-| Default filename | MEDIUM | LOW | P1 |
-| Success/error feedback | MEDIUM | LOW | P1 |
-| Keyboard shortcut (Cmd+S) | MEDIUM | LOW | P2 |
-| Markdown export | MEDIUM | MEDIUM | P2 |
-| Remember last location | LOW | LOW | P2 |
-| PDF export | LOW | HIGH | P3 |
-| Cloud export | LOW | HIGH | P3 |
+| Translation toggle | HIGH | LOW | P1 |
+| Target language selector | HIGH | LOW | P1 |
+| Translation service integration | HIGH | MEDIUM | P1 |
+| Translated transcript display | HIGH | MEDIUM | P1 |
+| Error handling | HIGH | LOW | P1 |
+| Copy translation button | MEDIUM | LOW | P2 |
+| Translation status indicator | MEDIUM | LOW | P2 |
+| Auto-detect source language | MEDIUM | LOW | P2 |
+| Split view display | MEDIUM | MEDIUM | P2 |
+| Real-time translation | HIGH | HIGH | P3 |
+| Offline translation | MEDIUM | HIGH | P3 |
 
 **Priority key:**
 - P1: Must have for launch
@@ -114,16 +118,16 @@ Features to defer until product-market fit is established.
 
 ## Competitor Feature Analysis
 
-| Feature | Otter.ai | Descript | Our Approach |
-|---------|----------|----------|--------------|
-| Export to .txt | Yes | Yes | Yes - v1 core feature |
-| Export to .md | No | Yes | Add in v1.x - differentiates |
-| Export to PDF | Yes | Yes | Defer to v2+ - high complexity |
-| Custom filename | Yes | Yes | Yes - default with timestamp |
-| Auto-save | Yes | Yes | Deliberately NOT for v1 - complexity |
-| Keyboard shortcut | Limited | Yes | Add in v1.x - user expectation |
+| Feature | Otter.ai | Notta | Our Approach |
+|---------|----------|-------|--------------|
+| Translation support | Yes (some plans) | Yes | Yes - v1.1 core feature |
+| Language selection | Yes | Yes (58+ languages) | Yes - reuse STT pattern |
+| Real-time translation | Limited | Yes | No - defer to future |
+| Side-by-side view | Yes | Yes | Yes - P2 |
+| Copy translation | Yes | Yes | Yes - P2 |
+| Offline translation | No | Limited | No - not for v1.1 |
 
-**Analysis approach:** Based on web research of competitor export features and UX Stack Exchange discussions on save vs. export conventions.
+**Analysis approach:** Based on web research of competitor translation features and translation app UI patterns.
 
 ## Implementation Notes
 
@@ -133,47 +137,44 @@ The existing Copy button (`ListenView.handleCopy()`) uses:
 1. Get transcript text via `sttView.getTranscriptText()`
 2. Use `navigator.clipboard.writeText()` for clipboard
 
-Save to file should follow similar pattern:
+Translation should follow similar pattern:
 1. Get transcript text via `sttView.getTranscriptText()`
 2. Send to main process via IPC (`ipcRenderer.invoke()`)
-3. Main process shows dialog via `dialog.showSaveDialog()`
-4. Main process writes file via `fs.writeFile()`
+3. Main process calls translation API
+4. Main process returns translated text
+5. ListenView displays translated text
 
-### Electron API Reference
+### Translation API Options
 
-```javascript
-// Main process (src/index.js or new handler)
-const { dialog } = require('electron');
-const fs = require('fs');
+| API | Languages | Pricing | Complexity |
+|-----|-----------|---------|------------|
+| Google Cloud Translation | 100+ | Free tier: 500K chars/month | Medium |
+| Azure Translator | 70+ | Free tier available | Medium |
+| OpenAI (GPT) | 100+ | Pay per token | Medium-High |
 
-ipcMain.handle('save-transcript', async (event, text) => {
-  const { canceled, filePath } = await dialog.showSaveDialog({
-    title: 'Save Transcript',
-    defaultPath: `transcript-${new Date().toISOString().slice(0,10)}.txt`,
-    filters: [
-      { name: 'Text Files', extensions: ['txt'] },
-      { name: 'Markdown', extensions: ['md'] }
-    ]
-  });
+### UX Pattern: Toggle Translation Display
 
-  if (canceled || !filePath) return { success: false, canceled: true };
+For MVP, use a simple toggle in ListenView:
+- Button: "Show Translation" / "Show Original"
+- Or icon button to swap views
+- Translation stored separately from original transcript
 
-  try {
-    fs.writeFileSync(filePath, text, 'utf8');
-    return { success: true, filePath };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-});
-```
+### UX Pattern: Translation Toggle in Settings
+
+Following Chrome/Edge pattern:
+- Toggle switch with clear ON/OFF labels
+- Label: "Enable Translation" or "Translate Transcripts"
+- Changes take effect immediately (no restart needed)
 
 ## Sources
 
-- [Electron Dialog API Documentation](https://www.electronjs.org/docs/latest/api/dialog) - Official Electron docs for showSaveDialog
-- [UX Stack Exchange: Save vs Export](https://ux.stackexchange.com/questions/72779/distinction-between-saving-and-exporting) - Save creates same format, export creates different format
-- [Electron Best Practices - Medium](https://medium.com/redblacktree/essential-desktop-application-attributes-in-electron-2118352cc3d5) - Essential desktop app patterns
-- Competitor analysis: Otter.ai, Descript export features (from web research)
+- [Google Cloud Translation API](https://cloud.google.com/translate) — Translation API reference, supports 100+ languages
+- [Microsoft Azure Speech Translation](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/speech-translation) — Real-time speech translation documentation
+- [UI Components for Translation Apps](https://hereandnowai.com/ui-components-translation-apps/) — UX patterns for translation apps
+- [Toggle UX Best Practices](https://www.eleken.co/blog-posts/toggle-ux) — Toggle switch design guidelines
+- [Notta Multilingual Transcription](https://www.notta.ai/en/multilingual-transcription) — Example of transcript + translation display
+- [TurboScribe Translation](https://turboscribe.ai/free-multi-language-transcription) — Speech-to-text with translation example
 
 ---
-*Feature research for: Save Transcript to File*
+*Feature research for: Translation Feature (v1.1)*
 *Researched: 2026-03-07*

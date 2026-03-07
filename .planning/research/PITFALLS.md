@@ -1,140 +1,149 @@
 # Pitfalls Research
 
-**Domain:** Electron File Save - Save Transcript to File Feature
+**Domain:** Electron Desktop App - Translation Feature (v1.1)
 **Researched:** 2026-03-07
-**Confidence:** HIGH
+**Confidence:** MEDIUM-HIGH
+
+*Note: This PITFALLS.md is specific to adding translation capability to an existing speech-to-text desktop app (PickleGlass). It focuses on integration pitfalls, not generic translation issues.*
 
 ## Critical Pitfalls
 
-### Pitfall 1: Renderer Cannot Access File System (contextIsolation Blocks fs)
+### Pitfall 1: Translation Latency Breaks Real-Time Expectation
 
 **What goes wrong:**
-The Save Transcript feature fails silently or throws errors because the renderer process cannot access Node.js `fs` module. With `contextIsolation: true` (default since Electron 12), direct `require('fs')` calls in the renderer are blocked.
+Users expect transcript to appear in real-time like the original STT output. Adding translation adds 200-2000ms API call latency, causing translated text to appear significantly after the original. This creates a jarring, broken user experience.
 
 **Why it happens:**
-PickleGlass uses `contextIsolation: true` and `nodeIntegration: false` (as seen in ARCHITECTURE.md and preload.js). The existing Copy functionality uses `navigator.clipboard.writeText()` which works in the renderer. However, file save requires the main process because there's no browser-native file save API.
+Translation APIs (Google Translate, DeepL, etc.) require network round-trip. Even fast APIs add hundreds of milliseconds. Unlike STT which streams partial results, translation typically requires complete text before processing.
 
 **How to avoid:**
-- Add new IPC handler in `featureBridge.js` that calls `dialog.showSaveDialog()` in main process
-- Expose new API via preload.js using `ipcRenderer.invoke()`
-- Call the IPC handler from the renderer (like ListenView.handleCopy() does)
+- Show original transcript immediately, display translated text asynchronously
+- Use optimistic UI: show original with "translating..." indicator, then replace with translation
+- Consider translating in chunks (sentence-by-sentence) rather than waiting for full transcript
+- Implement translation caching for repeated content
 
 **Warning signs:**
-- "require is not defined" in console
-- "fs module not found" errors
-- Feature works in development with `nodeIntegration: true` but fails in production
+- UI freezes while waiting for translation
+- Translated text appears in large batches rather than streaming
+- Users report "translation is slow" or "text appears late"
 
 **Phase to address:**
-Phase implementing the IPC handler and preload API
+Phase implementing translation display in Listen view - must handle async translation gracefully
 
 ---
 
-### Pitfall 2: Not Handling Dialog Cancellation
+### Pitfall 2: Cascading STT Errors Through Translation
 
 **What goes wrong:**
-After clicking "Save", if the user cancels the dialog, the code attempts to write to an undefined file path, causing errors or empty files.
+STT misrecognitions get "locked in" by translation. If speech recognition outputs "I saw a bear" but user said "I saw a bear", translation to Spanish produces "vi un oso" (correct for "bear") instead of "vi una bara" (what was actually spoken). The translation looks correct but reflects wrong original text.
 
 **Why it happens:**
-`dialog.showSaveDialog()` returns `{ canceled: boolean, filePath: string | undefined }`. Many implementations forget to check `canceled` before proceeding.
+Translation trusts its input. STT errors compound through the pipeline - translation cannot correct recognition mistakes.
 
 **How to avoid:**
-Always check both conditions:
-```javascript
-const { filePath, canceled } = await dialog.showSaveDialog(win, options);
-if (canceled || !filePath) {
-  return { success: false, canceled: true };
-}
-await fs.promises.writeFile(filePath, content);
-```
+- Add visual indicator showing original text is editable before translation
+- Consider offering "edit before translate" workflow
+- If using streaming STT, wait for finalization before translating critical segments
+- Document this limitation for users
 
 **Warning signs:**
-- Code only checks `if (filePath)` without checking `canceled`
-- User reports "Save does nothing" when canceling
+- Translations look correct but don't match what user actually said
+- User confusion about why translation is "wrong"
+- No way to correct STT errors that affect translation
 
 **Phase to address:**
-Phase implementing the save dialog handler
+Phase implementing translation service - must consider error propagation
 
 ---
 
-### Pitfall 3: Race Condition - Window Destroyed While Dialog Open
+### Pitfall 3: Uncontrolled API Costs
 
 **What goes wrong:**
-If the user closes the Listen window while the save dialog is open, the IPC handler tries to use a destroyed BrowserWindow reference, causing crashes.
+Translation API costs spiral out of control. Per-character pricing (Google Translate: ~$20/million characters for advanced) means long transcripts or frequent use creates unexpected bills. No cost controls lead to budget overruns.
 
 **Why it happens:**
-IPC handlers receive the event but don't check if the sending window still exists. The parent window reference becomes invalid.
+- No character count limits or warnings configured
+- Translation enabled by default for all users
+- No caching of translated content
+- No batch optimization (small requests have higher overhead)
 
 **How to avoid:**
-In the IPC handler, verify window is still valid:
+- Add character count display in UI so users see usage
+- Implement translation caching (store translations by content hash)
+- Add optional "translate only on demand" setting
+- Configure API quotas if available
+- Use batching: combine multiple segments into single API calls
+- Set up billing alerts
+
+**Warning signs:**
+- No character count shown to users
+- Every transcript automatically translated regardless of user intent
+- No caching mechanism
+
+**Phase to address:**
+Phase implementing translation service - must include cost controls
+
+---
+
+### Pitfall 4: No Graceful Degradation When Translation API Fails
+
+**What goes wrong:**
+Network issues, API quota exceeded, or service outages cause translation to fail completely. App crashes, shows error, or breaks the transcript display entirely instead of gracefully falling back.
+
+**Why it happens:**
+- No try/catch around translation API calls
+- No fallback to show original text when translation fails
+- No retry logic for transient failures
+- No offline indicator
+
+**How to avoid:**
 ```javascript
-ipcMain.handle('transcript:save', async (event, { content }) => {
-  const win = BrowserWindow.fromWebContents(event.sender);
-  if (!win || win.isDestroyed()) {
-    return { success: false, error: 'Window closed' };
+async function translateWithFallback(text, targetLang) {
+  try {
+    return await translationAPI.translate(text, targetLang);
+  } catch (error) {
+    console.warn('Translation failed:', error.message);
+    return { translatedText: text, error: 'Translation unavailable', fallback: true };
   }
-  const { filePath, canceled } = await dialog.showSaveDialog(win, { ... });
-  // ... rest of handler
-});
-```
-
-**Warning signs:**
-- App crashes when closing window during file dialog
-- "Cannot read property of null" errors
-
-**Phase to address:**
-Phase implementing the save IPC handler
-
----
-
-### Pitfall 4: Not Handling File Write Errors
-
-**What goes wrong:**
-File write fails silently (disk full, permission denied, invalid path) with no user feedback. User thinks save succeeded.
-
-**Why it happens:**
-`fs.promises.writeFile()` can fail for many reasons but implementations often don't wrap in try/catch or return error status to renderer.
-
-**How to avoid:**
-Wrap file operations in try/catch and return error status:
-```javascript
-try {
-  await fs.promises.writeFile(filePath, content);
-  return { success: true, filePath };
-} catch (error) {
-  console.error('File write failed:', error);
-  return { success: false, error: error.message };
 }
 ```
+- Always return original text with error indicator when translation fails
+- Implement retry with exponential backoff for transient errors
+- Show clear "Translation unavailable" state in UI
 
 **Warning signs:**
-- No error handling around `fs.writeFile`
-- User reports "save doesn't work" but no error shown
+- App shows blank or error state when API is down
+- No retry mechanism for failed requests
+- User cannot see transcript at all when translation fails
 
 **Phase to address:**
-Phase implementing the file write logic
+Phase implementing translation API integration - must handle failures gracefully
 
 ---
 
-### Pitfall 5: Missing Default File Extension
+### Pitfall 5: Blocking Main Thread / UI During Translation
 
 **What goes wrong:**
-User saves "my_transcript" without extension, then can't open the file because it's named "my_transcript" (no .txt).
+Translation API calls made from renderer or main process block UI, causing app to freeze. Long transcripts cause extended freezes.
 
 **Why it happens:**
-`dialog.showSaveDialog()` does not automatically add extensions. The `filters` option only limits what the user can select, not what gets added automatically.
+- Synchronous translation calls
+- Translation in main process without async
+- Large payload blocking event loop
 
 **How to avoid:**
-Either:
-1. Set `defaultPath` with extension: `defaultPath: 'transcript.txt'`
-2. Post-process to add extension if missing
-3. Use `properties: ['showOverwriteConfirmation']` to warn on overwrite
+- Always use async/await for translation API calls
+- Consider translation in background worker if available
+- Process in chunks to keep UI responsive
+- Show loading indicator rather than freeze
 
 **Warning signs:**
-- Users saving files without .txt extension
-- "I saved but can't find my file" complaints
+- UI becomes unresponsive during translation
+- "Spinning wheel" cursor during transcript processing
+- No loading states visible
 
 **Phase to address:**
-Phase implementing the save dialog options
+Phase implementing translation IPC handlers - must be async
 
 ---
 
@@ -142,10 +151,11 @@ Phase implementing the save dialog options
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Skip IPC and write from renderer with nodeIntegration | Simpler code, faster to implement | Security vulnerability, breaks in production | Never - security risk |
-| Use synchronous dialog.showSaveDialogSync | Avoid async complexity | Blocks UI, poor UX | Only for critical error scenarios |
-| Skip error handling for "simple" write | Faster to write | Silent failures, poor UX | Never |
-| Hardcode file path instead of dialog | No dialog to manage | Overwrites files, poor UX | Never for user-facing feature |
+| Translate entire transcript at end | Simple implementation | Long wait time, user sees nothing until complete | Only if real-time translation not required |
+| No translation caching | Simpler code | Repeated translation of same content = higher costs | Only for MVP with low usage |
+| Hardcode single language | Faster to implement | Users can't choose target language | Never - selector required per spec |
+| Skip error handling for "simple" API | Faster to write | App breaks on any API issue | Never |
+| Client-side translation only | No API costs | Poor quality, limited languages | Never - requires server-side for quality |
 
 ---
 
@@ -153,9 +163,11 @@ Phase implementing the save dialog options
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| dialog.showSaveDialog | Not passing parent window | Pass BrowserWindow reference so dialog is modal |
-| IPC handler | Not returning success/failure | Always return status so renderer can notify user |
-| preload.js | Adding new APIs without documentation | Follow existing pattern: `api.transcript: { save: ... }` |
+| Translation API | Sending empty or whitespace-only strings | Trim and skip translation for empty content |
+| Translation API | Not handling API rate limits | Implement rate limiting, queue requests |
+| Translation API | Exceeding request size limits | Chunk large text (Google: 5K chars optimal, 30K max) |
+| IPC for translation | Blocking renderer with sync calls | All translation via async IPC |
+| Settings storage | Not persisting language preference | Use electron-store or similar for settings |
 
 ---
 
@@ -163,8 +175,10 @@ Phase implementing the save dialog options
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Loading entire transcript into memory | High memory during save | Stream write for large content | Transcripts > 10MB |
-| Blocking main process with sync write | UI freezes | Use async `fs.promises.writeFile` | Always - use async |
+| Translating every STT partial result | Excessive API calls, high costs | Only translate final/stable transcript segments | Always - translate on finalization |
+| No caching | Repeated API calls for same text | Cache translations by content hash | When users replay sessions |
+| Large payload without chunking | API errors, timeouts | Split into 5K char chunks | Transcripts > 5K characters |
+| No request debouncing | Rapid fire API calls on streaming | Debounce translation requests by 500ms | Real-time streaming mode |
 
 ---
 
@@ -172,9 +186,10 @@ Phase implementing the save dialog options
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Accepting full file path from renderer | Path traversal attack | Use dialog.showSaveDialog which returns sanitized path |
-| Using nodeIntegration in renderer | Code injection vulnerability | Keep contextIsolation: true, use IPC |
-| No validation of content | Buffer overflow with malicious content | Validate content is string before writing |
+| Logging full transcripts with translations | Privacy breach - exposes user content | Sanitize logs, don't log translation content |
+| No API key protection | Key exposure, unauthorized usage | Use environment variables, never commit keys |
+| Sending sensitive content to third-party API | Data leaves user's machine without consent | Add clear notice, make translation optional |
+| No input sanitization | Prompt injection in translation prompts | Sanitize text before sending to API |
 
 ---
 
@@ -182,32 +197,36 @@ Phase implementing the save dialog options
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| No success feedback | User unsure if save worked | Show toast/notification on success |
-| No error message on failure | User doesn't know what went wrong | Display error in UI with retry option |
-| Save dialog opens behind window | User misses dialog, thinks it's broken | Always pass parent window to dialog |
-| Default filename not meaningful | User has to rename | Use session name or timestamp in defaultPath |
+| No way to verify translation quality | User trusts wrong translation | Show original and translated side-by-side |
+| Translation appears magically | User confused about what's happening | Show "translating..." indicator |
+| Can't copy original text | User wants original, not translation | Provide both original and translated copy options |
+| Target language not persisted | User must select language every session | Persist language preference in settings |
+| No toggle to disable translation | User wants original only | Translation toggle in settings (per spec) |
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Feature:** Save Transcript - IPC handler created but missing window validity check
-- [ ] **Feature:** Save Transcript - Dialog cancellation not handled properly
-- [ ] **Feature:** Save Transcript - No error feedback to user when save fails
-- [ ] **Feature:** Save Transcript - File extension not added to default path
-- [ ] **Feature:** Save Transcript - Large transcript (10MB+) may cause memory issues
+- [ ] **Translation:** API key configured but no error handling for auth failures
+- [ ] **Translation:** Language selector present but doesn't save preference
+- [ ] **Translation:** Translation toggle in settings but not wired to enable/disable
+- [ ] **Translation:** Translation works but blocks UI during API call
+- [ ] **Translation:** Translation fails silently with no user feedback
+- [ ] **Translation:** No character count shown before/after translation
+- [ ] **Translation:** Caching implemented but cache never invalidates
+- [ ] **Translation:** Large transcript causes API failure (size limits exceeded)
 
 ---
 
 ## Recovery Strategies
 
 | Pitfall | Recovery Cost | Recovery Steps |
-|---------|---------------|----------------|
-| Missing IPC handler | LOW | Add handler to featureBridge.js and preload.js |
-| Not handling cancellation | LOW | Add `if (canceled) return` check |
-| Window race condition | MEDIUM | Add `win.isDestroyed()` check in handler |
-| Silent write failure | MEDIUM | Add try/catch and return error to renderer |
-| Missing extension | HIGH | Update defaultPath to include .txt |
+|---------|---------------|-----------------|
+| API quota exceeded | LOW | Implement retry with backoff, show user-friendly message |
+| Network failure during translation | LOW | Show original with "translation unavailable" badge |
+| Translation quality poor | MEDIUM | Add "show original" option, don't replace original |
+| Cost overrun | MEDIUM | Add usage tracking, implement caching, add user limits |
+| Blocked UI | LOW | Move to async IPC, show loading state |
 
 ---
 
@@ -215,24 +234,26 @@ Phase implementing the save dialog options
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Renderer cannot access fs | Phase adding IPC handler | Test with contextIsolation: true |
-| Dialog cancellation not handled | Phase implementing save dialog | Test cancel flow manually |
-| Window race condition | Phase implementing IPC handler | Close window during dialog |
-| File write errors not handled | Phase implementing file write | Test with full disk, permission denied |
-| Missing file extension | Phase configuring dialog options | Save without typing extension |
-| No user feedback | Phase adding UI feedback | Verify success/error states |
+| Translation latency breaking UX | Phase implementing translation display | Test with long transcript, verify original shows immediately |
+| Cascading STT errors | Phase implementing translation service | Test with intentionally misrecognized speech |
+| Uncontrolled API costs | Phase implementing translation API | Monitor API usage, verify caching works |
+| No graceful degradation | Phase implementing translation API | Disconnect network, verify fallback works |
+| Blocking main thread | Phase implementing translation IPC | Test with large transcript, verify UI stays responsive |
+| Settings not wired | Phase implementing Settings UI | Toggle translation off, verify it stops |
+| No error feedback | Phase implementing translation display | Trigger translation error, verify message shown |
 
 ---
 
 ## Sources
 
-- [Electron dialog.showSaveDialog API](https://github.com/electron/electron/blob/main/docs/api/dialog.md) - Official documentation
-- [Electron Context Isolation](https://github.com/electron/electron/blob/main/docs/tutorial/context-isolation.md) - Security best practices
-- [Electron IPC Pattern](https://github.com/electron/electron/blob/main/docs/tutorial/ipc.md) - Main process communication
-- [Electron Breaking Changes](https://github.com/electron/electron/blob/main/docs/breaking-changes.md) - contextIsolation default
-- Project codebase analysis: featureBridge.js pattern, preload.js API exposure, ListenView.handleCopy()
+- [Google Cloud Translation API Documentation](https://cloud.google.com/translate/docs) - API limits, pricing, best practices
+- [Google Translate API Pricing](https://costgoat.com/pricing/google-translate) - Cost optimization guidance
+- [Translation API Best Practices](https://cloud.google.com/blog/products/ai-machine-learning/four-best-practices-for-translating-your-website) - Caching, batching recommendations
+- [Microsoft Fast Transcription API](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/fast-transcription-create) - Retry logic recommendations
+- [DEV.to: APIs for Translation](https://dev.to/elenahartmann/apis-for-translation-what-to-know-before-you-integrate-59n8) - Integration considerations
+- [ScienceDirect: End-to-End Speech-to-Text Translation Survey](https://www.sciencedirect.com/science/article/abs/pii/S0885230824001347) - Latency challenges in speech translation
 
 ---
 
-*Pitfalls research for: Save Transcript to File Feature*
+*Pitfalls research for: Translation Feature (v1.1) - Adding translation to speech-to-text app*
 *Researched: 2026-03-07*
