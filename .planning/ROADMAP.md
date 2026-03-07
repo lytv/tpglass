@@ -12,7 +12,7 @@
 - [x] **Phase 2: Translation Service** - Backend API integration and translation logic
 - [ ] **Phase 3: Settings UI** - Toggle and language selector in Settings
 - [ ] **Phase 4: Display Integration** - Translated text display and toggle in Listen view
-- [ ] **Phase 5: Integration & Polish** - End-to-end integration and refinement
+- [x] **Phase 5: Integration & Polish** - End-to-end integration and refinement (completed 2026-03-07)
 
 ---
 
@@ -69,7 +69,8 @@
 3. Loading indicator displays while translation API call is in progress
 4. User can copy translated text to clipboard via copy button
 
-**Plans**: TBD
+**Plans**:
+- [x] 04-display-integration/04-01-PLAN.md — Translation display and toggle in Listen view
 
 ---
 
@@ -94,8 +95,8 @@
 |-------|----------------|--------|-----------|
 | 2 - Translation Service | 1/1 | Complete | 2026-03-07 |
 | 3 - Settings UI | 1/1 | Complete | 2026-03-07 |
-| 4 - Display Integration | 0/1 | Not started | - |
-| 5 - Integration & Polish | 0/1 | Not started | - |
+| 4 - Display Integration | 1/1 | Complete | 2026-03-07 |
+| 5 - Integration & Polish | 0/1 | Complete    | 2026-03-07 |
 
 ---
 
