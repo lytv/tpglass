@@ -1,5 +1,15 @@
 # PickleGlass - Save Transcript Feature
 
+## Current Milestone: v1.1 Translation Feature
+
+**Goal:** Add ability to translate transcripts to a target language, controllable via Settings.
+
+**Target features:**
+- Translation toggle in Settings (enable/disable)
+- Target language selector in Settings
+- Translated transcript display in Listen view
+- Translation service using existing API keys
+
 ## What This Is
 
 Add ability to save Listen transcript to a local .txt file with a "Save" button in the desktop app UI. This feature extends the existing Listen (speech-to-text) functionality by allowing users to export their transcripts for offline use.
@@ -23,7 +33,10 @@ Users can export their speech-to-text transcripts from Listen sessions to local 
 
 ### Active
 
-(None — v1.0 shipped)
+- [ ] Translation toggle in Settings (enable/disable)
+- [ ] Target language selector in Settings
+- [ ] Translation service using existing API keys
+- [ ] Translated transcript display in Listen view
 
 ### Out of Scope
 
@@ -63,4 +76,4 @@ Users can export their speech-to-text transcripts from Listen sessions to local 
 
 ---
 
-*Last updated: 2026-03-07 after v1.0 milestone*
+*Last updated: 2026-03-07 after v1.1 milestone started*

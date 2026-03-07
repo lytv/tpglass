@@ -5,44 +5,31 @@
 See: .planning/PROJECT.md (updated 2026-03-07)
 
 **Core value:** Users can export their speech-to-text transcripts from Listen sessions to local .txt files, enabling offline access and sharing.
-**Current focus:** Phase 1: Save Transcript to File
+**Current focus:** v1.1 Translation Feature
 
 ## Current Position
 
-Phase: 1 of 1 (Save Transcript to File)
-Plan: 1 of 1 in current phase
-Status: Complete
-Last activity: 2026-03-07 — Plan 01-01 executed
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-07 — Milestone v1.1 started
 
-Progress: [██████████] 100%
+## Milestone v1.1 Goals
+
+- Translation toggle in Settings (enable/disable)
+- Target language selector in Settings
+- Translation service using existing API keys
+- Translated transcript display in Listen view
 
 ## Performance Metrics
 
-**Velocity:**
-- Total plans completed: 1
-- Average duration: N/A
-- Total execution time: ~15 minutes
-
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 1 - Save Transcript to File | 1 | 1 | ~15 min |
-
-**Recent Trend:**
-- Last 1 plan: Complete
-- Trend: Starting
-
-*Updated after each plan completion*
+*To be populated after execution starts*
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
-
-- None yet (project just initialized)
 
 ### Pending Todos
 
@@ -59,5 +46,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-07
-Stopped at: Roadmap created, ready for planning
+Stopped at: Milestone v1.1 started
 Resume file: None
