@@ -91,6 +91,8 @@ npm run setup
 
 `Ctrl/Cmd + Arrows` : move main window position
 
+`Ctrl/Cmd + L` : toggle listen (start/stop audio capture)
+
 ## Repo Activity
 
 ![Alt](https://repobeats.axiom.co/api/embed/a23e342faafa84fa8797fa57762885d82fac1180.svg "Repobeats analytics image")
