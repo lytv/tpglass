@@ -283,6 +283,39 @@ export class ListenView extends LitElement {
             transform: translate(-50%, -50%) scale(1);
         }
 
+        .save-button {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.9);
+            border: none;
+            padding: 4px;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+            transition: background-color 0.15s ease;
+        }
+
+        .save-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .save-button.saving {
+            opacity: 0.7;
+            cursor: wait;
+        }
+
+        .save-button.saved {
+            color: #50fa7b;
+        }
+
+        .save-button.error {
+            color: #ff5555;
+        }
+
         .timer {
             font-family: 'Monaco', 'Menlo', monospace;
             font-size: 10px;
@@ -294,6 +327,7 @@ export class ListenView extends LitElement {
         :host-context(body.has-glass) .top-bar,
         :host-context(body.has-glass) .toggle-button,
         :host-context(body.has-glass) .copy-button,
+        :host-context(body.has-glass) .save-button,
         :host-context(body.has-glass) .transcription-container,
         :host-context(body.has-glass) .insights-container,
         :host-context(body.has-glass) .stt-message,
@@ -318,6 +352,7 @@ export class ListenView extends LitElement {
 
         :host-context(body.has-glass) .toggle-button:hover,
         :host-context(body.has-glass) .copy-button:hover,
+        :host-context(body.has-glass) .save-button:hover,
         :host-context(body.has-glass) .outline-item:hover,
         :host-context(body.has-glass) .request-item.clickable:hover,
         :host-context(body.has-glass) .markdown-content:hover {
@@ -343,7 +378,8 @@ export class ListenView extends LitElement {
         :host-context(body.has-glass) .assistant-container,
         :host-context(body.has-glass) .stt-message,
         :host-context(body.has-glass) .toggle-button,
-        :host-context(body.has-glass) .copy-button {
+        :host-context(body.has-glass) .copy-button,
+        :host-context(body.has-glass) .save-button {
             border-radius: 0 !important;
         }
 
@@ -381,6 +417,7 @@ export class ListenView extends LitElement {
 
         :host-context(body.has-glass) .toggle-button:hover,
         :host-context(body.has-glass) .copy-button:hover,
+        :host-context(body.has-glass) .save-button:hover,
         :host-context(body.has-glass) .outline-item:hover,
         :host-context(body.has-glass) .request-item.clickable:hover,
         :host-context(body.has-glass) .markdown-content:hover {
@@ -406,7 +443,8 @@ export class ListenView extends LitElement {
         :host-context(body.has-glass) .assistant-container,
         :host-context(body.has-glass) .stt-message,
         :host-context(body.has-glass) .toggle-button,
-        :host-context(body.has-glass) .copy-button {
+        :host-context(body.has-glass) .copy-button,
+        :host-context(body.has-glass) .save-button {
             border-radius: 0 !important;
         }
 
@@ -423,6 +461,7 @@ export class ListenView extends LitElement {
         isHovering: { type: Boolean },
         isAnimating: { type: Boolean },
         copyState: { type: String },
+        saveState: { type: String },
         elapsedTime: { type: String },
         captureStartTime: { type: Number },
         isSessionActive: { type: Boolean },
@@ -443,6 +482,8 @@ export class ListenView extends LitElement {
         this.isThrottled = false;
         this.copyState = 'idle';
         this.copyTimeout = null;
+        this.saveState = 'idle';
+        this.saveTimeout = null;
 
         this.adjustWindowHeight = this.adjustWindowHeight.bind(this);
     }
@@ -591,6 +632,57 @@ export class ListenView extends LitElement {
         }
     }
 
+    async handleSave() {
+        if (this.saveState === 'saving') return;
+
+        let textToSave = '';
+
+        if (this.viewMode === 'transcript') {
+            const sttView = this.shadowRoot.querySelector('stt-view');
+            textToSave = sttView ? sttView.getTranscriptText() : '';
+        } else {
+            const summaryView = this.shadowRoot.querySelector('summary-view');
+            textToSave = summaryView ? summaryView.getSummaryText() : '';
+        }
+
+        if (!textToSave.trim()) {
+            this.saveState = 'error';
+            if (this.saveTimeout) clearTimeout(this.saveTimeout);
+            this.saveTimeout = setTimeout(() => {
+                this.saveState = 'idle';
+                this.requestUpdate();
+            }, 2000);
+            this.requestUpdate();
+            return;
+        }
+
+        this.saveState = 'saving';
+        this.requestUpdate();
+
+        try {
+            const result = await window.api.listenView.saveTranscript(textToSave);
+
+            if (result.canceled) {
+                this.saveState = 'idle';
+            } else if (result.success) {
+                this.saveState = 'saved';
+            } else {
+                this.saveState = 'error';
+            }
+        } catch (error) {
+            console.error('Save error:', error);
+            this.saveState = 'error';
+        }
+
+        if (this.saveTimeout) clearTimeout(this.saveTimeout);
+        this.saveTimeout = setTimeout(() => {
+            this.saveState = 'idle';
+            this.requestUpdate();
+        }, 2000);
+
+        this.requestUpdate();
+    }
+
     adjustWindowHeightThrottled() {
         if (this.isThrottled) {
             return;
@@ -668,6 +760,17 @@ export class ListenView extends LitElement {
                             </svg>
                             <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                 <path d="M20 6L9 17l-5-5" />
+                            </svg>
+                        </button>
+                        <button
+                            class="save-button ${this.saveState}"
+                            @click=${this.handleSave}
+                            title="Save transcript to file"
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+                                <polyline points="17 21 17 13 7 13 7 21" />
+                                <polyline points="7 3 7 8 15 8" />
                             </svg>
                         </button>
                     </div>
