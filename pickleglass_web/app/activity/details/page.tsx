@@ -27,6 +27,7 @@ const Section = ({ title, children }: { title: string, children: React.ReactNode
 );
 
 function SessionDetailsContent() {
+  console.log('[ActivityDetails] Page loaded');
   const userInfo = useRedirectIfNotAuth() as UserProfile | null;
   const [sessionDetails, setSessionDetails] = useState<SessionDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,8 +66,10 @@ function SessionDetailsContent() {
 
   // Load translation settings on mount
   useEffect(() => {
+    console.log('[ActivityDetails] Loading translation settings...');
     const loadSettings = async () => {
       const settings = await translationApi.getSettings();
+      console.log('[ActivityDetails] Settings loaded:', settings);
       if (settings) {
         setTranslationEnabled(settings.enabled);
         setTargetLanguage(settings.language);
