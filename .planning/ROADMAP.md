@@ -8,7 +8,7 @@
 
 ## Phases
 
-- [ ] **Phase 1: Save Transcript to File** - Complete save transcript functionality with native dialog
+- [x] **Phase 1: Save Transcript to File** - Complete save transcript functionality with native dialog
 
 ---
 
@@ -31,7 +31,7 @@
 5. User receives visible confirmation message after successful save
 6. User receives visible error message with reason if save operation fails
 
-**Plans:** TBD
+**Plans:** 01-01 (Complete)
 
 ---
 
@@ -39,8 +39,9 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Save Transcript to File | 0/1 | Not started | - |
+| 1. Save Transcript to File | 1/1 | Complete | 2026-03-07 |
 
 ---
 
 *Roadmap created: 2026-03-07*
+*Last updated: 2026-03-07*
