@@ -174,7 +174,14 @@ contextBridge.exposeInMainWorld('api', {
   listenView: {
     // Window Management
     adjustWindowHeight: (winName, height) => ipcRenderer.invoke('adjust-window-height', { winName, height }),
-    
+
+    // Save transcript to file
+    saveTranscript: (content) => {
+      const timestamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
+      const defaultFilename = `transcript-${timestamp}.txt`;
+      return ipcRenderer.invoke('file:save-transcript', { content, defaultFilename });
+    },
+
     // Listeners
     onSessionStateChanged: (callback) => ipcRenderer.on('session-state-changed', callback),
     removeOnSessionStateChanged: (callback) => ipcRenderer.removeListener('session-state-changed', callback)

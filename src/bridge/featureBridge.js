@@ -1,5 +1,7 @@
 // src/bridge/featureBridge.js
-const { ipcMain, app, BrowserWindow } = require('electron');
+const { ipcMain, app, BrowserWindow, dialog } = require('electron');
+const fs = require('fs');
+const path = require('path');
 const settingsService = require('../features/settings/settingsService');
 const authService = require('../features/common/services/authService');
 const whisperService = require('../features/common/services/whisperService');
@@ -105,6 +107,33 @@ module.exports = {
       } catch (error) {
         console.error('[FeatureBridge] listen:changeSession failed', error.message);
         return { success: false, error: error.message };
+      }
+    });
+
+    // File save - Save transcript to file
+    ipcMain.handle('file:save-transcript', async (event, { content, defaultFilename }) => {
+      try {
+        const filename = defaultFilename || `transcript-${new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '')}.txt`;
+
+        const { filePath, canceled } = await dialog.showSaveDialog({
+          title: 'Save Transcript',
+          defaultPath: filename,
+          filters: [
+            { name: 'Text Files', extensions: ['txt'] }
+          ]
+        });
+
+        if (canceled || !filePath) {
+          return { success: false, canceled: true, error: null };
+        }
+
+        await fs.promises.writeFile(filePath, content, 'utf-8');
+        console.log('[FeatureBridge] Transcript saved to:', filePath);
+
+        return { success: true, filePath };
+      } catch (error) {
+        console.error('[FeatureBridge] Error saving transcript:', error);
+        return { success: false, canceled: false, error: error.message };
       }
     });
 
