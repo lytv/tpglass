@@ -1,61 +1,77 @@
-# Requirements: PickleGlass - Save Transcript Feature
+# Requirements: PickleGlass Translation Feature
 
 **Defined:** 2026-03-07
-**Core Value:** Users can export their speech-to-text transcripts from Listen sessions to local .txt files, enabling offline access and sharing.
+**Milestone:** v1.1
 
-## v1 Requirements
+## v1.1 Requirements
 
-Requirements for initial release. Each maps to roadmap phases.
+### Settings
 
-### File Export
+- [ ] **SETT-01**: User can enable/disable translation in Settings
+- [ ] **SETT-02**: User can select target language for translation
+- [ ] **SETT-03**: Translation settings persist across app restarts
 
-- [ ] **FILE-01**: User can click Save button in Listen view to save transcript
-- [ ] **FILE-02**: Native save dialog appears for file location selection
-- [ ] **FILE-03**: Default filename suggested (transcript-{timestamp}.txt)
-- [ ] **FILE-04**: File saved as .txt format with transcript content
-- [ ] **FILE-05**: User receives success feedback after save completes
-- [ ] **FILE-06**: User receives error feedback if save fails
+### Translation Service
 
-## v2 Requirements
+- [ ] **SERV-01**: TranslationService can translate text using OpenAI API
+- [ ] **SERV-02**: Translation results are cached to avoid redundant API calls
+- [ ] **SERV-03**: Translation fails gracefully, showing original text with error indicator
 
-Deferred to future release. Tracked but not in current roadmap.
+### Display
 
-### Enhanced Export
+- [ ] **DISP-01**: User can view translated transcript in Listen view
+- [ ] **DISP-02**: User can toggle between original and translated text
+- [ ] **DISP-03**: Loading indicator shows during translation
+- [ ] **DISP-04**: Copy translation button allows copying translated text to clipboard
 
-- **FILE-07**: Export to Markdown (.md) format
-- **FILE-08**: Auto-save transcript after session ends
-- **FILE-09**: Remember last save location
-- **FILE-10**: Keyboard shortcut (Cmd+S) for quick save
+### Integration
+
+- [ ] **INTG-01**: Translation triggers automatically when translation is enabled and transcript is available
+- [ ] **INTG-02**: Settings changes reflect immediately in Listen view
+
+## v2 Requirements (Deferred)
+
+### Advanced Display
+
+- **DISP-05**: Side-by-side view showing original and translation simultaneously
+- **DISP-06**: Real-time translation during active listening session
+
+### Cost Management
+
+- **SERV-04**: User can see translation character count / API usage
+- **SERV-05**: User can set translation budget or disable auto-translate
 
 ## Out of Scope
 
-Explicitly excluded. Documented to prevent scope creep.
-
 | Feature | Reason |
 |---------|--------|
-| PDF export | High complexity, not requested |
-| DOC export | High complexity, not requested |
-| Cloud storage export | Not in scope - local files only |
-| Auto-save | Creates file management complexity |
+| Offline translation (local ML) | Requires 100MB+ model, not needed for v1.1 |
+| Real-time streaming translation | Adds WebSocket complexity, defer to v2 |
+| Speech-to-speech translation | Requires TTS synthesis, out of scope |
+| Translation history | Not requested, adds storage complexity |
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FILE-01 | Phase 1 | Pending |
-| FILE-02 | Phase 1 | Pending |
-| FILE-03 | Phase 1 | Pending |
-| FILE-04 | Phase 1 | Pending |
-| FILE-05 | Phase 1 | Pending |
-| FILE-06 | Phase 1 | Pending |
+| SETT-01 | Phase 1 | Pending |
+| SETT-02 | Phase 1 | Pending |
+| SETT-03 | Phase 1 | Pending |
+| SERV-01 | Phase 2 | Pending |
+| SERV-02 | Phase 2 | Pending |
+| SERV-03 | Phase 2 | Pending |
+| DISP-01 | Phase 3 | Pending |
+| DISP-02 | Phase 3 | Pending |
+| DISP-03 | Phase 3 | Pending |
+| DISP-04 | Phase 3 | Pending |
+| INTG-01 | Phase 4 | Pending |
+| INTG-02 | Phase 4 | Pending |
 
 **Coverage:**
-- v1 requirements: 6 total
-- Mapped to phases: 6
+- v1.1 requirements: 12 total
+- Mapped to phases: 12
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-07*
-*Last updated: 2026-03-07 after roadmap creation*
+*Last updated: 2026-03-07 after v1.1 milestone started*
