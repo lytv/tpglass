@@ -12,3 +12,18 @@
 
 ---
 
+## v1.1 Translation Feature (In Progress)
+
+**Phases:** 4 phases (2-5)
+
+| Phase | Focus | Requirements |
+|-------|-------|--------------|
+| 2 | Translation Service | SERV-01, SERV-02, SERV-03 |
+| 3 | Settings UI | SETT-01, SETT-02, SETT-03 |
+| 4 | Display Integration | DISP-01, DISP-02, DISP-03, DISP-04 |
+| 5 | Integration & Polish | INTG-01, INTG-02 |
+
+**Total requirements:** 12
+
+---
+

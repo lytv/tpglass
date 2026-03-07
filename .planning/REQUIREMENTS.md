@@ -54,18 +54,18 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SETT-01 | Phase 1 | Pending |
-| SETT-02 | Phase 1 | Pending |
-| SETT-03 | Phase 1 | Pending |
+| SETT-01 | Phase 3 | Pending |
+| SETT-02 | Phase 3 | Pending |
+| SETT-03 | Phase 3 | Pending |
 | SERV-01 | Phase 2 | Pending |
 | SERV-02 | Phase 2 | Pending |
 | SERV-03 | Phase 2 | Pending |
-| DISP-01 | Phase 3 | Pending |
-| DISP-02 | Phase 3 | Pending |
-| DISP-03 | Phase 3 | Pending |
-| DISP-04 | Phase 3 | Pending |
-| INTG-01 | Phase 4 | Pending |
-| INTG-02 | Phase 4 | Pending |
+| DISP-01 | Phase 4 | Pending |
+| DISP-02 | Phase 4 | Pending |
+| DISP-03 | Phase 4 | Pending |
+| DISP-04 | Phase 4 | Pending |
+| INTG-01 | Phase 5 | Pending |
+| INTG-02 | Phase 5 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 12 total
@@ -73,5 +73,6 @@
 - Unmapped: 0 ✓
 
 ---
+
 *Requirements defined: 2026-03-07*
-*Last updated: 2026-03-07 after v1.1 milestone started*
+*Last updated: 2026-03-07 — Roadmap created*
