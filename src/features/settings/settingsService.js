@@ -11,7 +11,10 @@ const localAIManager = require('../common/services/localAIManager');
 const store = new Store({
     name: 'pickle-glass-settings',
     defaults: {
-        users: {}
+        users: {},
+        // Translation settings defaults
+        translationEnabled: false,
+        translationLanguage: 'en'
     }
 });
 
@@ -420,6 +423,38 @@ async function setAutoUpdateSetting(isEnabled) {
     }
 }
 
+// Translation settings handlers
+async function getTranslationSettings() {
+    try {
+        const settings = await getSettings();
+        return {
+            enabled: settings.translationEnabled || false,
+            language: settings.translationLanguage || 'en'
+        };
+    } catch (error) {
+        console.error('[SettingsService] Error getting translation settings:', error);
+        return { enabled: false, language: 'en' };
+    }
+}
+
+async function setTranslationSettings({ enabled, language }) {
+    try {
+        const settings = await getSettings();
+        settings.translationEnabled = enabled;
+        settings.translationLanguage = language;
+
+        await saveSettings(settings);
+
+        // Notify windows of translation settings change
+        windowNotificationManager.notifyRelevantWindows('translation-settings-updated', { enabled, language });
+
+        return { success: true, enabled, language };
+    } catch (error) {
+        console.error('[SettingsService] Error setting translation settings:', error);
+        return { success: false, error: error.message };
+    }
+}
+
 function initialize() {
     // cleanup 
     windowNotificationManager.cleanup();
@@ -456,6 +491,9 @@ module.exports = {
     updateContentProtection,
     getAutoUpdateSetting,
     setAutoUpdateSetting,
+    // Translation settings
+    getTranslationSettings,
+    setTranslationSettings,
     // Model settings facade
     getModelSettings,
     clearApiKey,

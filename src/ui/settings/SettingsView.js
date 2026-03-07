@@ -219,6 +219,144 @@ export class SettingsView extends LitElement {
             gap: 4px;
         }
 
+        /* Translation settings styles */
+        .translation-section {
+            padding: 8px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 8px;
+        }
+
+        .translation-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 0;
+        }
+
+        .translation-toggle span {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* iOS-style toggle switch */
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .toggle-switch.active {
+            background: rgba(0, 122, 255, 0.8);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(20px);
+        }
+
+        /* Language dropdown */
+        .language-dropdown {
+            position: relative;
+            margin-top: 8px;
+        }
+
+        .language-dropdown-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .language-dropdown-trigger:hover {
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .language-dropdown-trigger span {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .language-dropdown-trigger .arrow {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            transition: transform 0.2s;
+        }
+
+        .language-dropdown-trigger.open .arrow {
+            transform: rotate(180deg);
+        }
+
+        .language-dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(30, 30, 30, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            margin-top: 4px;
+            z-index: 100;
+            display: none;
+        }
+
+        .language-dropdown-list.open {
+            display: block;
+        }
+
+        .language-search-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 8px;
+            font-size: 12px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        .language-search-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .language-option {
+            padding: 8px 12px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        .language-option:hover {
+            background: rgba(0, 122, 255, 0.2);
+        }
+
+        .language-option.selected {
+            background: rgba(0, 122, 255, 0.3);
+        }
+
         .api-key-section {
             padding: 6px 0;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -505,6 +643,11 @@ export class SettingsView extends LitElement {
         installingModels: { type: Object, state: true },
         // Whisper related properties
         whisperModels: { type: Array, state: true },
+        // Translation settings properties
+        translationEnabled: { type: Boolean, state: true },
+        translationLanguage: { type: String, state: true },
+        isLanguageDropdownOpen: { type: Boolean, state: true },
+        languageSearchQuery: { type: String, state: true },
     };
     //////// after_modelStateService ////////
 
@@ -537,8 +680,57 @@ export class SettingsView extends LitElement {
         this.handleUsePicklesKey = this.handleUsePicklesKey.bind(this)
         this.autoUpdateEnabled = true;
         this.autoUpdateLoading = true;
+        // Translation settings initialization
+        this.translationEnabled = false;
+        this.translationLanguage = 'en';
+        this.isLanguageDropdownOpen = false;
+        this.languageSearchQuery = '';
         this.loadInitialData();
         //////// after_modelStateService ////////
+    }
+
+    // Language list for translation settings
+    static LANGUAGES = [
+        { code: 'en', name: 'English' },
+        { code: 'es', name: 'Spanish' },
+        { code: 'fr', name: 'French' },
+        { code: 'de', name: 'German' },
+        { code: 'it', name: 'Italian' },
+        { code: 'pt', name: 'Portuguese' },
+        { code: 'ru', name: 'Russian' },
+        { code: 'zh', name: 'Chinese (Simplified)' },
+        { code: 'zh-TW', name: 'Chinese (Traditional)' },
+        { code: 'ja', name: 'Japanese' },
+        { code: 'ko', name: 'Korean' },
+        { code: 'ar', name: 'Arabic' },
+        { code: 'hi', name: 'Hindi' },
+        { code: 'nl', name: 'Dutch' },
+        { code: 'pl', name: 'Polish' },
+        { code: 'tr', name: 'Turkish' },
+        { code: 'vi', name: 'Vietnamese' },
+        { code: 'th', name: 'Thai' },
+        { code: 'id', name: 'Indonesian' },
+        { code: 'uk', name: 'Ukrainian' },
+        { code: 'cs', name: 'Czech' },
+        { code: 'sv', name: 'Swedish' },
+        { code: 'da', name: 'Danish' },
+        { code: 'fi', name: 'Finnish' },
+        { code: 'no', name: 'Norwegian' },
+    ];
+
+    // Computed property for filtered languages
+    get filteredLanguages() {
+        const query = this.languageSearchQuery.toLowerCase();
+        return SettingsView.LANGUAGES.filter(lang =>
+            lang.name.toLowerCase().includes(query) ||
+            lang.code.toLowerCase().includes(query)
+        );
+    }
+
+    // Get display name for selected language
+    get selectedLanguageName() {
+        const lang = SettingsView.LANGUAGES.find(l => l.code === this.translationLanguage);
+        return lang ? lang.name : 'English';
     }
 
     async loadAutoUpdateSetting() {
@@ -572,6 +764,79 @@ export class SettingsView extends LitElement {
             console.error('Error toggling auto-update:', e);
         }
         this.autoUpdateLoading = false;
+        this.requestUpdate();
+    }
+
+    async loadTranslationSettings() {
+        if (!window.api) return;
+        try {
+            const settings = await window.api.settingsView.getTranslationSettings();
+            if (settings) {
+                this.translationEnabled = settings.enabled || false;
+                this.translationLanguage = settings.language || 'en';
+                console.log('Translation settings loaded:', this.translationEnabled, this.translationLanguage);
+            }
+        } catch (e) {
+            console.error('Error loading translation settings:', e);
+        }
+        this.requestUpdate();
+    }
+
+    async handleToggleTranslation() {
+        if (!window.api) return;
+        try {
+            const newValue = !this.translationEnabled;
+            const result = await window.api.settingsView.setTranslationSettings({
+                enabled: newValue,
+                language: this.translationLanguage
+            });
+            if (result && result.success) {
+                this.translationEnabled = newValue;
+            } else {
+                console.error('Failed to update translation setting');
+            }
+        } catch (e) {
+            console.error('Error toggling translation:', e);
+        }
+        this.requestUpdate();
+    }
+
+    async handleSelectLanguage(langCode) {
+        if (!window.api) return;
+        try {
+            const result = await window.api.settingsView.setTranslationSettings({
+                enabled: this.translationEnabled,
+                language: langCode
+            });
+            if (result && result.success) {
+                this.translationLanguage = langCode;
+                this.isLanguageDropdownOpen = false;
+                this.languageSearchQuery = '';
+            } else {
+                console.error('Failed to update language setting');
+            }
+        } catch (e) {
+            console.error('Error selecting language:', e);
+        }
+        this.requestUpdate();
+    }
+
+    handleOpenLanguageDropdown() {
+        this.isLanguageDropdownOpen = !this.isLanguageDropdownOpen;
+        if (!this.isLanguageDropdownOpen) {
+            this.languageSearchQuery = '';
+        }
+        this.requestUpdate();
+    }
+
+    handleLanguageSearchInput(e) {
+        this.languageSearchQuery = e.target.value;
+        this.requestUpdate();
+    }
+
+    handleCloseLanguageDropdown() {
+        this.isLanguageDropdownOpen = false;
+        this.languageSearchQuery = '';
         this.requestUpdate();
     }
 
@@ -643,6 +908,9 @@ export class SettingsView extends LitElement {
             
             // Load LocalAI status asynchronously to improve initial load time
             this.loadLocalAIStatus();
+
+            // Load translation settings
+            this.loadTranslationSettings();
         } catch (error) {
             console.error('Error loading initial settings data:', error);
         } finally {
@@ -1423,7 +1691,38 @@ export class SettingsView extends LitElement {
                     <button class="settings-button full-width" @click=${this.handleToggleAutoUpdate} ?disabled=${this.autoUpdateLoading}>
                         <span>Automatic Updates: ${this.autoUpdateEnabled ? 'On' : 'Off'}</span>
                     </button>
-                    
+
+                    <!-- Translation Settings Section -->
+                    <div class="translation-section">
+                        <div class="translation-toggle">
+                            <span>Translation</span>
+                            <div class="toggle-switch ${this.translationEnabled ? 'active' : ''}" @click=${this.handleToggleTranslation}></div>
+                        </div>
+                        <div class="language-dropdown">
+                            <div class="language-dropdown-trigger ${this.isLanguageDropdownOpen ? 'open' : ''}" @click=${this.handleOpenLanguageDropdown}>
+                                <span>${this.selectedLanguageName}</span>
+                                <span class="arrow">▼</span>
+                            </div>
+                            <div class="language-dropdown-list ${this.isLanguageDropdownOpen ? 'open' : ''}">
+                                <input
+                                    type="text"
+                                    class="language-search-input"
+                                    placeholder="Search languages..."
+                                    .value=${this.languageSearchQuery}
+                                    @input=${this.handleLanguageSearchInput}
+                                >
+                                ${this.filteredLanguages.map(lang => html`
+                                    <div
+                                        class="language-option ${lang.code === this.translationLanguage ? 'selected' : ''}"
+                                        @click=${() => this.handleSelectLanguage(lang.code)}
+                                    >
+                                        ${lang.name}
+                                    </div>
+                                `)}
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="move-buttons">
                         <button class="settings-button half-width" @click=${this.handleMoveLeft}>
                             <span>← Move</span>
