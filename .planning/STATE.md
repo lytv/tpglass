@@ -1,3 +1,18 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: completed
+stopped_at: Plan 05.1-01 complete
+last_updated: "2026-03-08T10:45:00.000Z"
+last_activity: "2026-03-08 — Completed plan 05.1-01: STT Language Configuration for Deepgram"
+progress:
+  total_phases: 5
+  completed_phases: 5
+  total_plans: 5
+  completed_plans: 5
+---
+
 # Project State
 
 ## Project Reference
@@ -9,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-03-07)
 
 ## Current Position
 
-Phase: 4 - Display Integration (plan 04-01 complete)
-Plan: 04-01 (Display Integration)
-Status: Phase complete
-Last activity: 2026-03-08 — Completed quick task 2: Fix Transcription Copy/Save to Include Translated Content
+Phase: 05.1 - STT Language Configuration (plan 05.1-01 complete)
+Plan: 05.1-01 (STT Language Configuration for Deepgram)
+Status: Plan complete
+Last activity: 2026-03-08 — Completed plan 05.1-01: STT Language Configuration for Deepgram
 
 ## Milestone v1.1 Goals
 
@@ -43,6 +58,10 @@ None yet.
 
 None yet.
 
+### Roadmap Evolution
+
+- Phase 05.1 inserted after Phase 5: Thêm cấu hình ngôn ngữ STT cho Deepgram (URGENT)
+
 ### Quick Tasks Completed
 
 | # | Description | Date | Commit | Status | Directory |
@@ -52,6 +71,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-08
-Stopped at: Quick task 1 complete — auto-save transcription
-Resume file: None
+Last session: 2026-03-08T10:43:52.503Z
+Stopped at: Phase 05.1 context gathered
+Resume file: .planning/phases/05.1-th-m-c-u-h-nh-ng-n-ng-stt-cho-deepgram/05.1-CONTEXT.md
