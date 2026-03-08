@@ -703,15 +703,19 @@ export class ListenView extends LitElement {
     }
 
     async autoSaveTranscript() {
-        // Get transcript text (same logic as handleSave)
+        // Get transcript text - try both transcript and summary views
         let textToSave = '';
 
-        if (this.viewMode === 'transcript') {
-            const sttView = this.shadowRoot.querySelector('stt-view');
-            textToSave = sttView ? sttView.getTranscriptText() : '';
-        } else {
+        // First try transcript view (preferred)
+        const sttView = this.shadowRoot.querySelector('stt-view');
+        if (sttView) {
+            textToSave = sttView.getTranscriptText() || '';
+        }
+
+        // If no transcript text, try summary view
+        if (!textToSave.trim()) {
             const summaryView = this.shadowRoot.querySelector('summary-view');
-            textToSave = summaryView ? summaryView.getSummaryText() : '';
+            textToSave = summaryView ? summaryView.getSummaryText() || '' : '';
         }
 
         if (!textToSave.trim()) {
