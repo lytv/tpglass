@@ -531,6 +531,8 @@ export class ListenView extends LitElement {
                 if (wasActive && !isActive) {
                     this.hasCompletedRecording = true;
                     this.stopTimer();
+                    // Auto-save transcript when session stops
+                    this.autoSaveTranscript();
                     this.requestUpdate();
                 }
             });
@@ -698,6 +700,40 @@ export class ListenView extends LitElement {
         }, 2000);
 
         this.requestUpdate();
+    }
+
+    async autoSaveTranscript() {
+        // Get transcript text (same logic as handleSave)
+        let textToSave = '';
+
+        if (this.viewMode === 'transcript') {
+            const sttView = this.shadowRoot.querySelector('stt-view');
+            textToSave = sttView ? sttView.getTranscriptText() : '';
+        } else {
+            const summaryView = this.shadowRoot.querySelector('summary-view');
+            textToSave = summaryView ? summaryView.getSummaryText() : '';
+        }
+
+        if (!textToSave.trim()) {
+            console.log('[ListenView] No transcript text to auto-save');
+            return;
+        }
+
+        try {
+            // Auto-save without showing dialog
+            const timestamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
+            const defaultFilename = `transcript-${timestamp}.txt`;
+
+            const result = await window.api.listenView.saveTranscript(textToSave, { autoSave: true, defaultFilename });
+
+            if (result.success) {
+                console.log('[ListenView] Transcript auto-saved to:', result.filePath);
+            } else if (!result.canceled) {
+                console.error('[ListenView] Auto-save failed:', result.error);
+            }
+        } catch (error) {
+            console.error('[ListenView] Auto-save error:', error);
+        }
     }
 
     async loadTranslationSettings() {

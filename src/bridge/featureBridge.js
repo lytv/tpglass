@@ -2,6 +2,8 @@
 const { ipcMain, app, BrowserWindow, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+const Store = require('electron-store');
 const settingsService = require('../features/settings/settingsService');
 const authService = require('../features/common/services/authService');
 const whisperService = require('../features/common/services/whisperService');
@@ -15,6 +17,9 @@ const listenService = require('../features/listen/listenService');
 const permissionService = require('../features/common/services/permissionService');
 const encryptionService = require('../features/common/services/encryptionService');
 const translationService = require('../features/common/services/translationService');
+
+// Store instance for path memory
+const pathStore = new Store({ name: 'path-settings' });
 
 module.exports = {
   // Renderer로부터의 요청을 수신하고 서비스로 전달
@@ -125,30 +130,59 @@ module.exports = {
     });
 
     // File save - Save transcript to file
-    ipcMain.handle('file:save-transcript', async (event, { content, defaultFilename }) => {
+    ipcMain.handle('file:save-transcript', async (event, { content, defaultFilename, autoSave }) => {
       try {
         const filename = defaultFilename || `transcript-${new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '')}.txt`;
 
-        const { filePath, canceled } = await dialog.showSaveDialog({
-          title: 'Save Transcript',
-          defaultPath: filename,
-          filters: [
-            { name: 'Text Files', extensions: ['txt'] }
-          ]
-        });
+        // Get last save path from store, default to Documents folder
+        const lastSavePath = pathStore.get('lastSavePath', path.join(os.homedir(), 'Documents'));
 
-        if (canceled || !filePath) {
-          return { success: false, canceled: true, error: null };
+        let filePath;
+
+        if (autoSave) {
+          // Auto-save: directly save to last used directory without dialog
+          filePath = path.join(lastSavePath, filename);
+          await fs.promises.writeFile(filePath, content, 'utf-8');
+          console.log('[FeatureBridge] Transcript auto-saved to:', filePath);
+        } else {
+          // Manual save: show dialog with remembered path
+          const { filePath: selectedPath, canceled } = await dialog.showSaveDialog({
+            title: 'Save Transcript',
+            defaultPath: path.join(lastSavePath, filename),
+            filters: [
+              { name: 'Text Files', extensions: ['txt'] }
+            ]
+          });
+
+          if (canceled || !selectedPath) {
+            return { success: false, canceled: true, error: null };
+          }
+
+          filePath = selectedPath;
+          await fs.promises.writeFile(filePath, content, 'utf-8');
+          console.log('[FeatureBridge] Transcript saved to:', filePath);
+
+          // Store the directory (not full file path) for next time
+          const directory = path.dirname(filePath);
+          pathStore.set('lastSavePath', directory);
         }
-
-        await fs.promises.writeFile(filePath, content, 'utf-8');
-        console.log('[FeatureBridge] Transcript saved to:', filePath);
 
         return { success: true, filePath };
       } catch (error) {
         console.error('[FeatureBridge] Error saving transcript:', error);
         return { success: false, canceled: false, error: error.message };
       }
+    });
+
+    // Get last save path
+    ipcMain.handle('file:get-last-save-path', async () => {
+      return pathStore.get('lastSavePath', path.join(os.homedir(), 'Documents'));
+    });
+
+    // Set last save path
+    ipcMain.handle('file:set-last-save-path', async (event, { path: savePath }) => {
+      pathStore.set('lastSavePath', savePath);
+      return { success: true };
     });
 
     // ModelStateService
