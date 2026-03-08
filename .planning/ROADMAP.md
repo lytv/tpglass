@@ -85,7 +85,10 @@
 1. Translation automatically triggers when enabled and transcript becomes available
 2. Changing translation settings in Settings immediately reflects in Listen view without page reload
 
-**Plans**: TBD
+**Plans**: 1 plan
+
+**Plans**:
+- [x] 05-integration-polish/05-01-PLAN.md — Translation auto-trigger and real-time settings update
 
 ---
 
@@ -96,9 +99,22 @@
 | 2 - Translation Service | 1/1 | Complete | 2026-03-07 |
 | 3 - Settings UI | 1/1 | Complete | 2026-03-07 |
 | 4 - Display Integration | 1/1 | Complete | 2026-03-07 |
-| 5 - Integration & Polish | 0/1 | Complete    | 2026-03-07 |
+| 5 - Integration & Polish | 1/1 | Complete | 2026-03-07 |
 
 ---
 
-*Roadmap updated: 2026-03-07*
-*Next: /gsd:plan-phase 3*
+*Roadmap updated: 2026-03-08*
+
+### Phase 05.1: Thêm cấu hình ngôn ngữ STT cho Deepgram
+
+**Goal:** Add user-configurable Deepgram STT language settings. Users can select their preferred STT language, which persists across sessions.
+
+**Requirements**: None specified
+
+**Depends on:** Phase 5
+
+**Plans:** 1 plan
+
+Plans:
+- [x] 05.1-01-PLAN.md — Add STT language configuration for Deepgram
+
