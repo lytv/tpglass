@@ -473,9 +473,12 @@ async function getSttLanguage() {
 async function setSttLanguage({ language }) {
     try {
         const settings = await getSettings();
+        console.log('[SettingsService] setSttLanguage - current settings.sttLanguage:', settings.sttLanguage);
         settings.sttLanguage = language;
+        console.log('[SettingsService] setSttLanguage - new settings.sttLanguage:', settings.sttLanguage);
 
         await saveSettings(settings);
+        console.log('[SettingsService] setSttLanguage - saved successfully');
 
         // Notify windows of STT language change
         windowNotificationManager.notifyRelevantWindows('stt-language-updated', { language });

@@ -151,10 +151,11 @@ class SttService {
     }
 
     async initializeSttSessions(language = 'en') {
-        // Try to get stored STT language from settings
+        // Try to get stored STT language from settings - this takes priority
         let storedLanguage = 'en-US';
         try {
             const sttSettings = await settingsService.getSttLanguage();
+            console.log('[SttService] getSttLanguage result:', sttSettings);
             if (sttSettings?.language) {
                 storedLanguage = sttSettings.language;
             }
@@ -162,7 +163,9 @@ class SttService {
             console.log('[SttService] Using default language - settings not available');
         }
 
-        const effectiveLanguage = process.env.OPENAI_TRANSCRIBE_LANG || language || storedLanguage || 'en-US';
+        // Priority: env var > stored setting > passed parameter > default
+        const effectiveLanguage = storedLanguage || 'en-US';
+        console.log('[SttService] Language - stored:', storedLanguage, 'effective:', effectiveLanguage);
 
         const modelInfo = await modelStateService.getCurrentModelInfo('stt');
         if (!modelInfo || !modelInfo.apiKey) {
