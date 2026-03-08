@@ -175,16 +175,17 @@ export class SttView extends LitElement {
         const container = this.shadowRoot.querySelector('.transcription-container');
         this._shouldScrollAfterUpdate = container ? container.scrollTop + container.clientHeight >= container.scrollHeight - 10 : false;
 
-        const findLastPartialIdx = spk => {
+        // Find ANY message (partial OR final) for this speaker - not just partials
+        const findLastMessageIdx = spk => {
             for (let i = this.sttMessages.length - 1; i >= 0; i--) {
                 const m = this.sttMessages[i];
-                if (m.speaker === spk && m.isPartial) return i;
+                if (m.speaker === spk) return i;
             }
             return -1;
         };
 
         const newMessages = [...this.sttMessages];
-        const targetIdx = findLastPartialIdx(speaker);
+        const targetIdx = findLastMessageIdx(speaker);
 
         if (isPartial) {
             if (targetIdx !== -1) {
@@ -205,9 +206,15 @@ export class SttView extends LitElement {
             }
         } else if (isFinal) {
             if (targetIdx !== -1) {
+                // Merge with existing message instead of creating duplicate
+                const existingMsg = newMessages[targetIdx];
+                // If existing message has different text, append with space to merge
+                const mergedText = existingMsg.text !== text
+                    ? `${existingMsg.text} ${text}`.trim()
+                    : text;
                 newMessages[targetIdx] = {
-                    ...newMessages[targetIdx],
-                    text,
+                    ...existingMsg,
+                    text: mergedText,
                     isPartial: false,
                     isFinal: true,
                 };
