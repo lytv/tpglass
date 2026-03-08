@@ -128,6 +128,7 @@ export class SttView extends LitElement {
         isVisible: { type: Boolean },
         showTranslation: { type: Boolean },
         translationLanguage: { type: String },
+        translationSettingsLoaded: { type: Boolean },
         translations: { type: Object, state: true },
     };
 
@@ -137,6 +138,7 @@ export class SttView extends LitElement {
         this.isVisible = true;
         this.showTranslation = false;
         this.translationLanguage = 'en';
+        this.translationSettingsLoaded = false;
         this.translations = {};
         this.messageIdCounter = 0;
         this._shouldScrollAfterUpdate = false;
@@ -321,6 +323,15 @@ export class SttView extends LitElement {
 
         if (changedProperties.has('showTranslation') && this.showTranslation) {
             this.triggerTranslations();
+        }
+
+        // Fix race condition: when translation settings finish loading and showTranslation is enabled,
+        // trigger translations for any messages that arrived before settings loaded
+        if (changedProperties.has('translationSettingsLoaded') && this.translationSettingsLoaded) {
+            if (this.showTranslation && this.sttMessages.length > 0) {
+                console.log('[SttView] Translation settings loaded, triggering translations for existing messages');
+                this.triggerTranslations();
+            }
         }
     }
 
