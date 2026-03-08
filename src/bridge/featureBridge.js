@@ -33,6 +33,10 @@ module.exports = {
     ipcMain.handle('settings:getTranslationSettings', async () => await settingsService.getTranslationSettings());
     ipcMain.handle('settings:setTranslationSettings', async (event, { enabled, language }) => await settingsService.setTranslationSettings({ enabled, language }));
 
+    // STT settings
+    ipcMain.handle('settings:getSttLanguage', async () => await settingsService.getSttLanguage());
+    ipcMain.handle('settings:setSttLanguage', async (event, { language }) => await settingsService.setSttLanguage({ language }));
+
     // Translation IPC handlers
     ipcMain.handle('translation:translate', async (event, { text, targetLanguage, sourceLanguage }) => {
       return await translationService.translate(text, targetLanguage, sourceLanguage);
