@@ -328,5 +328,13 @@ contextBridge.exposeInMainWorld('api', {
     // Listeners for settings changes
     onTranslationSettingsUpdated: (callback) => ipcRenderer.on('translation-settings-updated', callback),
     removeOnTranslationSettingsUpdated: (callback) => ipcRenderer.removeListener('translation-settings-updated', callback)
+  },
+
+  // STT Language API
+  stt: {
+    getLanguage: () => ipcRenderer.invoke('settings:getSttLanguage'),
+    setLanguage: (language) => ipcRenderer.invoke('settings:setSttLanguage', { language }),
+    onSttLanguageUpdated: (callback) => ipcRenderer.on('stt-language-updated', callback),
+    removeOnSttLanguageUpdated: (callback) => ipcRenderer.removeListener('stt-language-updated', callback)
   }
 });
