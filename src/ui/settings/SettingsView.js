@@ -685,6 +685,11 @@ export class SettingsView extends LitElement {
         this.translationLanguage = 'en';
         this.isLanguageDropdownOpen = false;
         this.languageSearchQuery = '';
+
+        // STT language settings
+        this.sttLanguage = 'en-US';
+        this.isSttLanguageDropdownOpen = false;
+        this.sttLanguageSearchQuery = '';
         this.loadInitialData();
         //////// after_modelStateService ////////
     }
@@ -718,6 +723,37 @@ export class SettingsView extends LitElement {
         { code: 'no', name: 'Norwegian' },
     ];
 
+    // STT language list for speech recognition (BCP-47 codes supported by Deepgram)
+    static STT_LANGUAGES = [
+        { code: 'en-US', name: 'English (US)' },
+        { code: 'en-GB', name: 'English (UK)' },
+        { code: 'en-AU', name: 'English (Australia)' },
+        { code: 'en-IN', name: 'English (India)' },
+        { code: 'es', name: 'Spanish' },
+        { code: 'es-419', name: 'Spanish (Latin America)' },
+        { code: 'fr', name: 'French' },
+        { code: 'fr-CA', name: 'French (Canada)' },
+        { code: 'de', name: 'German' },
+        { code: 'it', name: 'Italian' },
+        { code: 'pt-BR', name: 'Portuguese (Brazil)' },
+        { code: 'pt-PT', name: 'Portuguese (Portugal)' },
+        { code: 'ru', name: 'Russian' },
+        { code: 'zh', name: 'Chinese (Simplified)' },
+        { code: 'zh-TW', name: 'Chinese (Traditional)' },
+        { code: 'ja', name: 'Japanese' },
+        { code: 'ko', name: 'Korean' },
+        { code: 'ar', name: 'Arabic' },
+        { code: 'hi', name: 'Hindi' },
+        { code: 'nl', name: 'Dutch' },
+        { code: 'pl', name: 'Polish' },
+        { code: 'tr', name: 'Turkish' },
+        { code: 'vi', name: 'Vietnamese' },
+        { code: 'sv', name: 'Swedish' },
+        { code: 'da', name: 'Danish' },
+        { code: 'no', name: 'Norwegian' },
+        { code: 'fi', name: 'Finnish' },
+    ];
+
     // Computed property for filtered languages
     get filteredLanguages() {
         const query = this.languageSearchQuery.toLowerCase();
@@ -731,6 +767,21 @@ export class SettingsView extends LitElement {
     get selectedLanguageName() {
         const lang = SettingsView.LANGUAGES.find(l => l.code === this.translationLanguage);
         return lang ? lang.name : 'English';
+    }
+
+    // Computed property for filtered STT languages
+    get filteredSttLanguages() {
+        const query = this.sttLanguageSearchQuery.toLowerCase();
+        return SettingsView.STT_LANGUAGES.filter(lang =>
+            lang.name.toLowerCase().includes(query) ||
+            lang.code.toLowerCase().includes(query)
+        );
+    }
+
+    // Get display name for selected STT language
+    get selectedSttLanguageName() {
+        const lang = SettingsView.STT_LANGUAGES.find(l => l.code === this.sttLanguage);
+        return lang ? lang.name : 'English (US)';
     }
 
     async loadAutoUpdateSetting() {
@@ -840,6 +891,57 @@ export class SettingsView extends LitElement {
         this.requestUpdate();
     }
 
+    // STT Language methods
+    async loadSttLanguage() {
+        if (!window.api) return;
+        try {
+            const settings = await window.api.stt.getLanguage();
+            if (settings) {
+                this.sttLanguage = settings.language || 'en-US';
+                console.log('STT language loaded:', this.sttLanguage);
+            }
+        } catch (e) {
+            console.error('Error loading STT language:', e);
+        }
+        this.requestUpdate();
+    }
+
+    async handleSttLanguageSelect(langCode) {
+        if (!window.api) return;
+        try {
+            const result = await window.api.stt.setLanguage(langCode);
+            if (result && result.success) {
+                this.sttLanguage = langCode;
+                this.isSttLanguageDropdownOpen = false;
+                this.sttLanguageSearchQuery = '';
+            } else {
+                console.error('Failed to update STT language setting');
+            }
+        } catch (e) {
+            console.error('Error selecting STT language:', e);
+        }
+        this.requestUpdate();
+    }
+
+    handleOpenSttLanguageDropdown() {
+        this.isSttLanguageDropdownOpen = !this.isSttLanguageDropdownOpen;
+        if (!this.isSttLanguageDropdownOpen) {
+            this.sttLanguageSearchQuery = '';
+        }
+        this.requestUpdate();
+    }
+
+    handleSttLanguageSearchInput(e) {
+        this.sttLanguageSearchQuery = e.target.value;
+        this.requestUpdate();
+    }
+
+    handleCloseSttLanguageDropdown() {
+        this.isSttLanguageDropdownOpen = false;
+        this.sttLanguageSearchQuery = '';
+        this.requestUpdate();
+    }
+
     async loadLocalAIStatus() {
         try {
             // Load Ollama status
@@ -911,6 +1013,9 @@ export class SettingsView extends LitElement {
 
             // Load translation settings
             this.loadTranslationSettings();
+
+            // Load STT language settings
+            this.loadSttLanguage();
         } catch (error) {
             console.error('Error loading initial settings data:', error);
         } finally {
@@ -1715,6 +1820,36 @@ export class SettingsView extends LitElement {
                                     <div
                                         class="language-option ${lang.code === this.translationLanguage ? 'selected' : ''}"
                                         @click=${() => this.handleSelectLanguage(lang.code)}
+                                    >
+                                        ${lang.name}
+                                    </div>
+                                `)}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STT Language Settings Section -->
+                    <div class="translation-section">
+                        <div class="translation-toggle">
+                            <span>Speech Recognition Language</span>
+                        </div>
+                        <div class="language-dropdown">
+                            <div class="language-dropdown-trigger ${this.isSttLanguageDropdownOpen ? 'open' : ''}" @click=${this.handleOpenSttLanguageDropdown}>
+                                <span>${this.selectedSttLanguageName}</span>
+                                <span class="arrow">▼</span>
+                            </div>
+                            <div class="language-dropdown-list ${this.isSttLanguageDropdownOpen ? 'open' : ''}">
+                                <input
+                                    type="text"
+                                    class="language-search-input"
+                                    placeholder="Search languages..."
+                                    .value=${this.sttLanguageSearchQuery}
+                                    @input=${this.handleSttLanguageSearchInput}
+                                >
+                                ${this.filteredSttLanguages.map(lang => html`
+                                    <div
+                                        class="language-option ${lang.code === this.sttLanguage ? 'selected' : ''}"
+                                        @click=${() => this.handleSttLanguageSelect(lang.code)}
                                     >
                                         ${lang.name}
                                     </div>
