@@ -14,7 +14,9 @@ const store = new Store({
         users: {},
         // Translation settings defaults
         translationEnabled: false,
-        translationLanguage: 'en'
+        translationLanguage: 'en',
+        // STT settings defaults
+        sttLanguage: 'en-US'
     }
 });
 
@@ -455,6 +457,36 @@ async function setTranslationSettings({ enabled, language }) {
     }
 }
 
+// STT settings handlers
+async function getSttLanguage() {
+    try {
+        const settings = await getSettings();
+        return {
+            language: settings.sttLanguage || 'en-US'
+        };
+    } catch (error) {
+        console.error('[SettingsService] Error getting STT language:', error);
+        return { language: 'en-US' };
+    }
+}
+
+async function setSttLanguage({ language }) {
+    try {
+        const settings = await getSettings();
+        settings.sttLanguage = language;
+
+        await saveSettings(settings);
+
+        // Notify windows of STT language change
+        windowNotificationManager.notifyRelevantWindows('stt-language-updated', { language });
+
+        return { success: true, language };
+    } catch (error) {
+        console.error('[SettingsService] Error setting STT language:', error);
+        return { success: false, error: error.message };
+    }
+}
+
 function initialize() {
     // cleanup 
     windowNotificationManager.cleanup();
@@ -494,6 +526,9 @@ module.exports = {
     // Translation settings
     getTranslationSettings,
     setTranslationSettings,
+    // STT settings
+    getSttLanguage,
+    setSttLanguage,
     // Model settings facade
     getModelSettings,
     clearApiKey,
