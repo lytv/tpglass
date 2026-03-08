@@ -547,12 +547,23 @@ export class ListenView extends LitElement {
                     this.requestUpdate();
                 }
             });
+            // Listen for translation settings changes
+            this._onTranslationSettingsUpdated = () => {
+                this.loadTranslationSettings();
+            };
+            window.api.ui.onTranslationSettingsUpdated(this._onTranslationSettingsUpdated);
         }
     }
 
     disconnectedCallback() {
         super.disconnectedCallback();
         this.stopTimer();
+
+        // Clean up translation settings listener
+        if (this._onTranslationSettingsUpdated && window.api && window.api.ui) {
+            window.api.ui.removeOnTranslationSettingsUpdated(this._onTranslationSettingsUpdated);
+            this._onTranslationSettingsUpdated = null;
+        }
 
         if (this.adjustHeightThrottle) {
             clearTimeout(this.adjustHeightThrottle);
@@ -752,9 +763,14 @@ export class ListenView extends LitElement {
     }
 
     async loadTranslationSettings() {
-        if (!window.api) return;
+        console.log('[ListenView] loadTranslationSettings called, window.api exists:', !!window.api, 'translation:', !!window.api?.translation);
+        if (!window.api || !window.api.translation) {
+            console.warn('[ListenView] Translation API not available');
+            return;
+        }
         try {
             const settings = await window.api.translation.getSettings();
+            console.log('[ListenView] Got translation settings:', settings);
             if (settings) {
                 this.translationEnabled = settings.enabled || false;
                 this.translationLanguage = settings.language || 'en';

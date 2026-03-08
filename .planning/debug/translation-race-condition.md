@@ -1,5 +1,5 @@
 ---
-status: verifying
+status: resolved
 trigger: "Implement fixes for transcription translation intermittent issue: race condition in settings loading"
 created: 2026-03-08T00:00:00.000Z
 updated: 2026-03-08T00:00:00.000Z
@@ -9,7 +9,7 @@ updated: 2026-03-08T00:00:00.000Z
 hypothesis: "Implementing fixes: Add translationSettingsLoaded flag, re-trigger translations when settings load, add error handling"
 test: "Apply code changes to ListenView.js and SttView.js"
 expecting: "Translation will work reliably when toggled, with proper error handling"
-next_action: "Verify fixes by testing in app"
+next_action: "Verified - commit complete"
 
 ## Symptoms
 expected: "Translation should work immediately when toggled, with or without API key configured (shows error if missing)"
