@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-03-07)
 Phase: 4 - Display Integration (plan 04-01 complete)
 Plan: 04-01 (Display Integration)
 Status: Phase complete
-Last activity: 2026-03-07 — Phase 4 execution complete
+Last activity: 2026-03-08 — Completed quick task 2: Fix Transcription Copy/Save to Include Translated Content
 
 ## Milestone v1.1 Goals
 
@@ -48,6 +48,7 @@ None yet.
 | # | Description | Date | Commit | Status | Directory |
 |---|-------------|------|--------|--------|-----------|
 | 1 | Add auto-save transcription with remembered file path | 2026-03-08 | 26eb2f4 | Verified | [1-add-auto-save-transcription-with-remembe](./quick/1-add-auto-save-transcription-with-remembe/) |
+| 2 | Fix Transcription Copy/Save to Include Translated Content | 2026-03-08 | fd244c3 | | [2-fix-transcription-copy-save-to-include-t](./quick/2-fix-transcription-copy-save-to-include-t/) |
 
 ## Session Continuity
 
