@@ -113,7 +113,7 @@
 
 **Depends on:** Phase 5
 
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [x] 05.1-01-PLAN.md — Add STT language configuration for Deepgram
