@@ -106,7 +106,17 @@ module.exports = {
     ipcMain.handle('ask:closeAskWindow',  async () => await askService.closeAskWindow());
     
     // Listen
-    ipcMain.handle('listen:sendMicAudio', async (event, { data, mimeType }) => await listenService.handleSendMicAudioContent(data, mimeType));
+    ipcMain.handle('listen:sendMicAudio', async (event, { data, mimeType }) => {
+        // Silently ignore - session may have stopped while audio buffer was being processed
+        try {
+            return await listenService.handleSendMicAudioContent(data, mimeType);
+        } catch (err) {
+            if (err.message?.includes('session not active')) {
+                return { success: false, error: 'Session not active' };
+            }
+            throw err;
+        }
+    });
     ipcMain.handle('listen:sendSystemAudio', async (event, { data, mimeType }) => {
         const result = await listenService.sttService.sendSystemAudioContent(data, mimeType);
         if(result.success) {
