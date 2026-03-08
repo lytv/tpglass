@@ -104,10 +104,24 @@ class ModelStateService extends EventEmitter {
     async handleLocalAIStateChange(service, state) {
         console.log(`[ModelStateService] LocalAI state changed: ${service}`, state);
         if (!state.installed || !state.running) {
-            const types = service === 'ollama' ? ['llm'] : service === 'whisper' ? ['stt'] : [];
-            await this._autoSelectAvailableModels(types);
+            const type = service === 'ollama' ? 'llm' : service === 'whisper' ? 'stt' : null;
+            if (type) {
+                const selected = await this.getSelectedModels();
+                const currentProvider = this.getProviderForModel(selected[type], type);
+                
+                // Only force re-selection if the current provider is the one that went offline
+                if (currentProvider === service) {
+                    console.log(`[ModelStateService] Active ${type} provider (${service}) is no longer available. Re-selecting...`);
+                    await this._autoSelectAvailableModels([type]);
+                } else {
+                    console.log(`[ModelStateService] Local provider ${service} is offline, but current ${type} provider is ${currentProvider}. No action needed.`);
+                    // We still want to emit state update so UI knows local AI is offline
+                    this.emit('state-updated', await this.getLiveState());
+                }
+            }
+        } else {
+            this.emit('state-updated', await this.getLiveState());
         }
-        this.emit('state-updated', await this.getLiveState());
     }
 
     async getLiveState() {
