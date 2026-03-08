@@ -43,8 +43,14 @@ None yet.
 
 None yet.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Status | Directory |
+|---|-------------|------|--------|--------|-----------|
+| 1 | Add auto-save transcription with remembered file path | 2026-03-08 | 26eb2f4 | Verified | [1-add-auto-save-transcription-with-remembe](./quick/1-add-auto-save-transcription-with-remembe/) |
+
 ## Session Continuity
 
-Last session: 2026-03-07
-Stopped at: Phase 4 complete — ready for Phase 5
+Last session: 2026-03-08
+Stopped at: Quick task 1 complete — auto-save transcription
 Resume file: None
