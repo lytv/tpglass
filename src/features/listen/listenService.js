@@ -277,6 +277,11 @@ class ListenService {
                 // 다른 함수들은 이미 success 객체를 반환합니다.
                 return result && typeof result.success !== 'undefined' ? result : { success: true };
             } catch (e) {
+                // Silently ignore session not active errors - this is a harmless race condition
+                // where audio buffers are still being processed after session ends
+                if (e.message?.includes('session not active')) {
+                    return { success: false, error: 'Session not active' };
+                }
                 console.error(errorMessage, e);
                 return { success: false, error: e.message };
             }
