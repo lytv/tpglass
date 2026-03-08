@@ -252,7 +252,14 @@ export class SttView extends LitElement {
     }
 
     getTranscriptText() {
-        return this.sttMessages.map(msg => `${msg.speaker}: ${msg.text}`).join('\n');
+        return this.sttMessages.map(msg => {
+            let text = `${msg.speaker}: ${msg.text}`;
+            // Include translation if enabled and translation exists for this message
+            if (this.showTranslation && this.translations[msg.id]) {
+                text += `\n  Translation: ${this.translations[msg.id]}`;
+            }
+            return text;
+        }).join('\n');
     }
 
     async translateMessage(text, messageId) {
