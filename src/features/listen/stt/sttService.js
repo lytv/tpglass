@@ -2,6 +2,7 @@ const { BrowserWindow } = require('electron');
 const { spawn } = require('child_process');
 const { createSTT } = require('../../common/ai/factory');
 const modelStateService = require('../../common/services/modelStateService');
+const settingsService = require('../../settings/settingsService');
 
 const COMPLETION_DEBOUNCE_MS = 2000;
 
@@ -150,7 +151,18 @@ class SttService {
     }
 
     async initializeSttSessions(language = 'en') {
-        const effectiveLanguage = process.env.OPENAI_TRANSCRIBE_LANG || language || 'en';
+        // Try to get stored STT language from settings
+        let storedLanguage = 'en-US';
+        try {
+            const sttSettings = await settingsService.getSttLanguage();
+            if (sttSettings?.language) {
+                storedLanguage = sttSettings.language;
+            }
+        } catch (e) {
+            console.log('[SttService] Using default language - settings not available');
+        }
+
+        const effectiveLanguage = process.env.OPENAI_TRANSCRIBE_LANG || language || storedLanguage || 'en-US';
 
         const modelInfo = await modelStateService.getCurrentModelInfo('stt');
         if (!modelInfo || !modelInfo.apiKey) {
