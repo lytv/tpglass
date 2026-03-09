@@ -40,6 +40,7 @@ let mediaStream = null;
 let micMediaStream = null;
 let audioContext = null;
 let audioProcessor = null;
+let micEnabled = true; // Microphone enabled state
 let systemAudioContext = null;
 let systemAudioProcessor = null;
 
@@ -571,6 +572,85 @@ async function startCapture(screenshotIntervalSeconds = 5, imageQuality = 'mediu
     }
 }
 
+function disableMic() {
+    if (!micEnabled) {
+        console.log('Microphone already disabled');
+        return;
+    }
+
+    // Stop all microphone MediaStream tracks
+    if (micMediaStream) {
+        micMediaStream.getTracks().forEach(track => track.stop());
+        micMediaStream = null;
+    }
+
+    // Disconnect and nullify audioProcessor
+    if (audioProcessor) {
+        audioProcessor.disconnect();
+        audioProcessor = null;
+    }
+
+    // Close and nullify audioContext
+    if (audioContext) {
+        audioContext.close();
+        audioContext = null;
+    }
+
+    micEnabled = false;
+    console.log('Microphone disabled');
+}
+
+async function enableMic() {
+    if (micEnabled) {
+        console.log('Microphone already enabled');
+        return;
+    }
+
+    if (micMediaStream) {
+        console.log('Microphone already enabled (stream exists)');
+        return;
+    }
+
+    try {
+        // Re-initialize microphone capture
+        micMediaStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                sampleRate: SAMPLE_RATE,
+                channelCount: 1,
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+            },
+            video: false,
+        });
+
+        console.log('Microphone enabled');
+
+        // Setup audio processing based on platform
+        if (isMacOS) {
+            const { context, processor } = await setupMicProcessing(micMediaStream);
+            audioContext = context;
+            audioProcessor = processor;
+        } else if (isLinux) {
+            setupLinuxMicProcessing(micMediaStream);
+        } else {
+            // Windows
+            const { context, processor } = await setupMicProcessing(micMediaStream);
+            audioContext = context;
+            audioProcessor = processor;
+        }
+
+        micEnabled = true;
+        console.log('Microphone enabled');
+    } catch (error) {
+        console.error('Failed to enable microphone:', error);
+    }
+}
+
+function isMicEnabled() {
+    return micEnabled;
+}
+
 function stopCapture() {
     // Clean up microphone resources
     if (audioProcessor) {
@@ -619,6 +699,9 @@ module.exports = {
     disposeAec,      // 필요시 Rust 객체 파괴
     startCapture,
     stopCapture,
+    enableMic,
+    disableMic,
+    isMicEnabled,
     isLinux,
     isMacOS,
 };
