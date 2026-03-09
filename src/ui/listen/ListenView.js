@@ -200,7 +200,7 @@ export class ListenView extends LitElement {
             gap: 4px;
             align-items: center;
             flex-shrink: 0;
-            width: 120px;
+            width: 145px;
             justify-content: flex-end;
             box-sizing: border-box;
             padding: 4px;
