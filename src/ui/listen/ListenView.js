@@ -334,6 +334,37 @@ export class ListenView extends LitElement {
             color: #ff5555;
         }
 
+        .mic-toggle-button {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.9);
+            border: none;
+            outline: none;
+            box-shadow: none;
+            padding: 4px;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+            transition: background-color 0.15s ease;
+        }
+
+        .mic-toggle-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .mic-toggle-button.disabled {
+            color: #ff5555;
+            opacity: 0.8;
+        }
+
+        .mic-toggle-button.disabled:hover {
+            background: rgba(255, 85, 85, 0.2);
+        }
+
         .timer {
             font-family: 'Monaco', 'Menlo', monospace;
             font-size: 10px;
@@ -346,6 +377,7 @@ export class ListenView extends LitElement {
         :host-context(body.has-glass) .toggle-button,
         :host-context(body.has-glass) .copy-button,
         :host-context(body.has-glass) .save-button,
+        :host-context(body.has-glass) .mic-toggle-button,
         :host-context(body.has-glass) .transcription-container,
         :host-context(body.has-glass) .insights-container,
         :host-context(body.has-glass) .stt-message,
@@ -371,6 +403,7 @@ export class ListenView extends LitElement {
         :host-context(body.has-glass) .toggle-button:hover,
         :host-context(body.has-glass) .copy-button:hover,
         :host-context(body.has-glass) .save-button:hover,
+        :host-context(body.has-glass) .mic-toggle-button:hover,
         :host-context(body.has-glass) .outline-item:hover,
         :host-context(body.has-glass) .request-item.clickable:hover,
         :host-context(body.has-glass) .markdown-content:hover {
@@ -397,7 +430,8 @@ export class ListenView extends LitElement {
         :host-context(body.has-glass) .stt-message,
         :host-context(body.has-glass) .toggle-button,
         :host-context(body.has-glass) .copy-button,
-        :host-context(body.has-glass) .save-button {
+        :host-context(body.has-glass) .save-button,
+        :host-context(body.has-glass) .mic-toggle-button {
             border-radius: 0 !important;
         }
 
@@ -436,6 +470,7 @@ export class ListenView extends LitElement {
         :host-context(body.has-glass) .toggle-button:hover,
         :host-context(body.has-glass) .copy-button:hover,
         :host-context(body.has-glass) .save-button:hover,
+        :host-context(body.has-glass) .mic-toggle-button:hover,
         :host-context(body.has-glass) .outline-item:hover,
         :host-context(body.has-glass) .request-item.clickable:hover,
         :host-context(body.has-glass) .markdown-content:hover {
@@ -462,7 +497,8 @@ export class ListenView extends LitElement {
         :host-context(body.has-glass) .stt-message,
         :host-context(body.has-glass) .toggle-button,
         :host-context(body.has-glass) .copy-button,
-        :host-context(body.has-glass) .save-button {
+        :host-context(body.has-glass) .save-button,
+        :host-context(body.has-glass) .mic-toggle-button {
             border-radius: 0 !important;
         }
 
@@ -488,10 +524,12 @@ export class ListenView extends LitElement {
         translationEnabled: { type: Boolean },
         translationLanguage: { type: String },
         translationSettingsLoaded: { type: Boolean },
+        micEnabled: { type: Boolean },
     };
 
     constructor() {
         super();
+        this.micEnabled = true;
         this.isSessionActive = false;
         this.hasCompletedRecording = false;
         this.viewMode = 'insights';
@@ -797,6 +835,21 @@ export class ListenView extends LitElement {
         this.requestUpdate();
     }
 
+    toggleMic() {
+        this.micEnabled = !this.micEnabled;
+        if (this.micEnabled) {
+            if (window.listenCapture && window.listenCapture.enableMic) {
+                window.listenCapture.enableMic();
+            }
+        } else {
+            if (window.listenCapture && window.listenCapture.disableMic) {
+                window.listenCapture.disableMic();
+            }
+        }
+        console.log(`[ListenView] Microphone toggled: ${this.micEnabled}`);
+        this.requestUpdate();
+    }
+
     adjustWindowHeightThrottled() {
         if (this.isThrottled) {
             return;
@@ -896,6 +949,30 @@ export class ListenView extends LitElement {
                                 <polyline points="17 21 17 13 7 13 7 21" />
                                 <polyline points="7 3 7 8 15 8" />
                             </svg>
+                        </button>
+                        <button
+                            class="mic-toggle-button ${!this.micEnabled ? 'disabled' : ''}"
+                            @click=${this.toggleMic}
+                            title="${this.micEnabled ? 'Disable microphone' : 'Enable microphone'}"
+                        >
+                            ${this.micEnabled
+                                ? html`
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                                          <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                                          <line x1="12" y1="19" x2="12" y2="23" />
+                                          <line x1="8" y1="23" x2="16" y2="23" />
+                                      </svg>
+                                  `
+                                : html`
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                          <line x1="1" y1="1" x2="23" y2="23" />
+                                          <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6" />
+                                          <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11" />
+                                          <line x1="12" y1="19" x2="12" y2="23" />
+                                          <line x1="8" y1="23" x2="16" y2="23" />
+                                      </svg>
+                                  `}
                         </button>
                     </div>
                 </div>
