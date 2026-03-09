@@ -41,6 +41,7 @@ let micMediaStream = null;
 let audioContext = null;
 let audioProcessor = null;
 let micEnabled = true; // Microphone enabled state
+let isEnablingMic = false; // Guard to prevent concurrent enableMic() calls
 let systemAudioContext = null;
 let systemAudioProcessor = null;
 
@@ -450,24 +451,27 @@ async function startCapture(screenshotIntervalSeconds = 5, imageQuality = 'mediu
                 }
             }
 
-            try {
-                micMediaStream = await navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        sampleRate: SAMPLE_RATE,
-                        channelCount: 1,
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                        autoGainControl: true,
-                    },
-                    video: false,
-                });
+            // Only start microphone if enabled
+            if (micEnabled) {
+                try {
+                    micMediaStream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            sampleRate: SAMPLE_RATE,
+                            channelCount: 1,
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true,
+                        },
+                        video: false,
+                    });
 
-                console.log('macOS microphone capture started');
-                const { context, processor } = await setupMicProcessing(micMediaStream);
-                audioContext = context;
-                audioProcessor = processor;
-            } catch (micErr) {
-                console.warn('Failed to get microphone on macOS:', micErr);
+                    console.log('macOS microphone capture started');
+                    const { context, processor } = await setupMicProcessing(micMediaStream);
+                    audioContext = context;
+                    audioProcessor = processor;
+                } catch (micErr) {
+                    console.warn('Failed to get microphone on macOS:', micErr);
+                }
             }
             ////////// for index & subjects //////////
 
@@ -489,27 +493,29 @@ async function startCapture(screenshotIntervalSeconds = 5, imageQuality = 'mediu
                 audio: false, // Don't use system audio loopback on Linux
             });
 
-            // Get microphone input for Linux
-            let micMediaStream = null;
-            try {
-                micMediaStream = await navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        sampleRate: SAMPLE_RATE,
-                        channelCount: 1,
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                        autoGainControl: true,
-                    },
-                    video: false,
-                });
+            // Get microphone input for Linux (only if enabled)
+            // NOTE: Use module-level micMediaStream, don't shadow with local variable!
+            if (micEnabled) {
+                try {
+                    micMediaStream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            sampleRate: SAMPLE_RATE,
+                            channelCount: 1,
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true,
+                        },
+                        video: false,
+                    });
 
-                console.log('Linux microphone capture started');
+                    console.log('Linux microphone capture started');
 
-                // Setup audio processing for microphone on Linux
-                setupLinuxMicProcessing(micMediaStream);
-            } catch (micError) {
-                console.warn('Failed to get microphone access on Linux:', micError);
-                // Continue without microphone if permission denied
+                    // Setup audio processing for microphone on Linux
+                    setupLinuxMicProcessing(micMediaStream);
+                } catch (micError) {
+                    console.warn('Failed to get microphone access on Linux:', micError);
+                    // Continue without microphone if permission denied
+                }
             }
 
             console.log('Linux screen capture started');
@@ -523,24 +529,26 @@ async function startCapture(screenshotIntervalSeconds = 5, imageQuality = 'mediu
                 throw new Error('STT sessions not initialized - please wait for initialization to complete');
             }
 
-            // 1. Get user's microphone
-            try {
-                micMediaStream = await navigator.mediaDevices.getUserMedia({
-                    audio: {
-                        sampleRate: SAMPLE_RATE,
-                        channelCount: 1,
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                        autoGainControl: true,
-                    },
-                    video: false,
-                });
-                console.log('Windows microphone capture started');
-                const { context, processor } = await setupMicProcessing(micMediaStream);
-                audioContext = context;
-                audioProcessor = processor;
-            } catch (micErr) {
-                console.warn('Could not get microphone access on Windows:', micErr);
+            // 1. Get user's microphone (only if enabled)
+            if (micEnabled) {
+                try {
+                    micMediaStream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            sampleRate: SAMPLE_RATE,
+                            channelCount: 1,
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true,
+                        },
+                        video: false,
+                    });
+                    console.log('Windows microphone capture started');
+                    const { context, processor } = await setupMicProcessing(micMediaStream);
+                    audioContext = context;
+                    audioProcessor = processor;
+                } catch (micErr) {
+                    console.warn('Could not get microphone access on Windows:', micErr);
+                }
             }
 
             // 2. Get system audio using native Electron loopback
@@ -601,6 +609,12 @@ function disableMic() {
 }
 
 async function enableMic() {
+    // Guard against concurrent calls
+    if (isEnablingMic) {
+        console.log('Microphone enable in progress, skipping');
+        return;
+    }
+
     if (micEnabled) {
         console.log('Microphone already enabled');
         return;
@@ -611,6 +625,7 @@ async function enableMic() {
         return;
     }
 
+    isEnablingMic = true;
     try {
         // Re-initialize microphone capture
         micMediaStream = await navigator.mediaDevices.getUserMedia({
@@ -644,6 +659,8 @@ async function enableMic() {
         console.log('Microphone enabled');
     } catch (error) {
         console.error('Failed to enable microphone:', error);
+    } finally {
+        isEnablingMic = false;
     }
 }
 

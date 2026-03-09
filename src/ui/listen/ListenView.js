@@ -835,11 +835,15 @@ export class ListenView extends LitElement {
         this.requestUpdate();
     }
 
-    toggleMic() {
+    async toggleMic() {
         this.micEnabled = !this.micEnabled;
         if (this.micEnabled) {
             if (window.listenCapture && window.listenCapture.enableMic) {
-                window.listenCapture.enableMic();
+                try {
+                    await window.listenCapture.enableMic();
+                } catch (error) {
+                    console.error('[ListenView] Failed to enable microphone:', error);
+                }
             }
         } else {
             if (window.listenCapture && window.listenCapture.disableMic) {

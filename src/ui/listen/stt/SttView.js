@@ -215,6 +215,7 @@ export class SttView extends LitElement {
                     const mergedText = `${existingMsg.text} ${text}`.trim();
                     newMessages[targetIdx] = {
                         ...existingMsg,
+                        id: crypto.randomUUID(),  // Generate new unique ID to prevent translation key collision
                         text: mergedText,
                         isPartial: false,
                         isFinal: true,
@@ -281,6 +282,7 @@ export class SttView extends LitElement {
         if (this._translationCache.has(cacheKey)) {
             const cachedText = this._translationCache.get(cacheKey);
             this.translations = { ...this.translations, [messageId]: cachedText };
+            this.requestUpdate();
             return cachedText;
         }
 
