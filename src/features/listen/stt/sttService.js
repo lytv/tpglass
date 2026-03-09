@@ -260,10 +260,14 @@ class SttService {
                 console.log(`[SttService-Me-Deepgram] Received: isFinal=${isFinal}, text="${text}"`);
 
                 if (isFinal) {
-                    // 최종 결과가 도착하면, 현재 진행중인 부분 발화는 비우고
-                    // 최종 텍스트로 debounce를 실행합니다.
-                    this.myCurrentUtterance = ''; 
-                    this.debounceMyCompletion(text); 
+                    // Flush immediately - no debounce for Deepgram final results
+                    this.myCurrentUtterance = '';
+                    if (this.modelInfo?.provider === 'gemini') {
+                        this.myCompletionBuffer += text;
+                    } else {
+                        this.myCompletionBuffer += (this.myCompletionBuffer ? ' ' : '') + text;
+                    }
+                    this.flushMyCompletion();  // Call immediately, no timer
                 } else {
                     // 부분 결과(interim)인 경우, 화면에 실시간으로 업데이트합니다.
                     if (this.myCompletionTimer) clearTimeout(this.myCompletionTimer);
@@ -401,8 +405,14 @@ class SttService {
                 const isFinal = message.is_final;
 
                 if (isFinal) {
-                    this.theirCurrentUtterance = ''; 
-                    this.debounceTheirCompletion(text); 
+                    // Flush immediately - no debounce for Deepgram final results
+                    this.theirCurrentUtterance = '';
+                    if (this.modelInfo?.provider === 'gemini') {
+                        this.theirCompletionBuffer += text;
+                    } else {
+                        this.theirCompletionBuffer += (this.theirCompletionBuffer ? ' ' : '') + text;
+                    }
+                    this.flushTheirCompletion();  // Call immediately, no timer
                 } else {
                     if (this.theirCompletionTimer) clearTimeout(this.theirCompletionTimer);
                     this.theirCompletionTimer = null;

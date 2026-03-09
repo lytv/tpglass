@@ -207,19 +207,28 @@ export class SttView extends LitElement {
                 });
             }
         } else if (isFinal) {
+            // Merge only with previous FINAL message from same speaker (not partials)
             if (targetIdx !== -1) {
-                // Merge with existing message instead of creating duplicate
                 const existingMsg = newMessages[targetIdx];
-                // If existing message has different text, append with space to merge
-                const mergedText = existingMsg.text !== text
-                    ? `${existingMsg.text} ${text}`.trim()
-                    : text;
-                newMessages[targetIdx] = {
-                    ...existingMsg,
-                    text: mergedText,
-                    isPartial: false,
-                    isFinal: true,
-                };
+                if (existingMsg.isFinal && !existingMsg.isPartial) {
+                    // Merge with previous final message
+                    const mergedText = `${existingMsg.text} ${text}`.trim();
+                    newMessages[targetIdx] = {
+                        ...existingMsg,
+                        text: mergedText,
+                        isPartial: false,
+                        isFinal: true,
+                    };
+                } else {
+                    // Previous message is partial - create new message
+                    newMessages.push({
+                        id: this.messageIdCounter++,
+                        speaker,
+                        text,
+                        isPartial: false,
+                        isFinal: true,
+                    });
+                }
             } else {
                 newMessages.push({
                     id: this.messageIdCounter++,
