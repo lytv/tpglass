@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Phase 05.1 context gathered
-last_updated: "2026-03-08T11:23:13.956Z"
-last_activity: "2026-03-08 — Completed plan 05.1-01: STT Language Configuration for Deepgram"
+stopped_at: Phase 05.2-01 complete
+last_updated: "2026-03-09T07:15:00.000Z"
+last_activity: "2026-03-09 — Completed plan 05.2-01: Microphone Toggle Button"
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 5
-  completed_plans: 5
+  total_phases: 6
+  completed_phases: 6
+  total_plans: 6
+  completed_plans: 6
 ---
 
 # Project State
@@ -24,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-03-07)
 
 ## Current Position
 
-Phase: 05.1 - STT Language Configuration (plan 05.1-01 complete)
-Plan: 05.1-01 (STT Language Configuration for Deepgram)
+Phase: 05.2 - Microphone Toggle Button (plan 05.2-01 complete)
+Plan: 05.2-01 (Microphone Toggle Button)
 Status: Plan complete
-Last activity: 2026-03-08 — Completed plan 05.1-01: STT Language Configuration for Deepgram
+Last activity: 2026-03-09 — Completed plan 05.2-01: Microphone Toggle Button
 
 ## Milestone v1.1 Goals
 
@@ -60,6 +60,7 @@ None yet.
 
 ### Roadmap Evolution
 
+- Phase 05.2 inserted after Phase 5: Add Microphone Toggle Button to prevent acoustic leakage (URGENT)
 - Phase 05.1 inserted after Phase 5: Thêm cấu hình ngôn ngữ STT cho Deepgram (URGENT)
 
 ### Quick Tasks Completed
@@ -71,6 +72,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-08T10:43:52.503Z
-Stopped at: Phase 05.1 context gathered
-Resume file: .planning/phases/05.1-th-m-c-u-h-nh-ng-n-ng-stt-cho-deepgram/05.1-CONTEXT.md
+Last session: 2026-03-09T07:15:00.000Z
+Stopped at: Phase 05.2-01 complete
+Resume file: .planning/phases/05.2-add-microphone-toggle-button-to-prevent-acoustic-leakage/05.2-01-PLAN.md

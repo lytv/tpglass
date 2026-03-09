@@ -100,6 +100,8 @@
 | 3 - Settings UI | 1/1 | Complete | 2026-03-07 |
 | 4 - Display Integration | 1/1 | Complete | 2026-03-07 |
 | 5 - Integration & Polish | 1/1 | Complete | 2026-03-07 |
+| 05.1 - STT Language Configuration | 1/1 | Complete | 2026-03-08 |
+| 05.2 - Microphone Toggle Button | 1/1 | Complete | 2026-03-09 |
 
 ---
 
