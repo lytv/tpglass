@@ -103,7 +103,17 @@
 
 ---
 
-*Roadmap updated: 2026-03-08*
+*Roadmap updated: 2026-03-09*
+
+### Phase 05.2: Add Microphone Toggle Button to prevent acoustic leakage (INSERTED)
+
+**Goal:** Add a microphone toggle button on the Listen view UI to allow users to turn off microphone input to prevent acoustic leakage when they only want transcription from system audio.
+**Requirements**: None (urgent feature)
+**Depends on:** Phase 5
+**Plans:** 1/1 plan
+
+Plans:
+- [x] 05.2-01-PLAN.md — Add mic toggle button with enableMic/disableMic functions
 
 ### Phase 05.1: Thêm cấu hình ngôn ngữ STT cho Deepgram
 
@@ -117,4 +127,3 @@
 
 Plans:
 - [x] 05.1-01-PLAN.md — Add STT language configuration for Deepgram
-
