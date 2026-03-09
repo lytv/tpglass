@@ -101,7 +101,7 @@
 | 4 - Display Integration | 1/1 | Complete | 2026-03-07 |
 | 5 - Integration & Polish | 1/1 | Complete | 2026-03-07 |
 | 05.1 - STT Language Configuration | 1/1 | Complete | 2026-03-08 |
-| 05.2 - Microphone Toggle Button | 1/1 | Complete | 2026-03-09 |
+| 05.2 - Microphone Toggle Button | 1/1 | Complete    | 2026-03-09 |
 
 ---
 
@@ -112,7 +112,7 @@
 **Goal:** Add a microphone toggle button on the Listen view UI to allow users to turn off microphone input to prevent acoustic leakage when they only want transcription from system audio.
 **Requirements**: None (urgent feature)
 **Depends on:** Phase 5
-**Plans:** 1/1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [x] 05.2-01-PLAN.md — Add mic toggle button with enableMic/disableMic functions
