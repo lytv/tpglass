@@ -189,17 +189,38 @@ export class SttView extends LitElement {
         const newMessages = [...this.sttMessages];
         const targetIdx = findLastMessageIdx(speaker);
 
+        // Always create a new message with a new unique ID to prevent ID collision
+        // This ensures each transcript gets its own translation
+        const newMessageId = crypto.randomUUID();
+
         if (isPartial) {
             if (targetIdx !== -1) {
-                newMessages[targetIdx] = {
-                    ...newMessages[targetIdx],
-                    text,
-                    isPartial: true,
-                    isFinal: false,
-                };
+                const existingMsg = newMessages[targetIdx];
+                // Only update in-place if it's from the same "session" (continuous speech)
+                // Otherwise create a new message
+                const isContinuousUpdate = existingMsg.isPartial && !existingMsg.isFinal;
+
+                if (isContinuousUpdate) {
+                    // Update existing partial message - keep same ID for continuous speech
+                    newMessages[targetIdx] = {
+                        ...newMessages[targetIdx],
+                        text,
+                        isPartial: true,
+                        isFinal: false,
+                    };
+                } else {
+                    // Not continuous - create new message with new ID
+                    newMessages.push({
+                        id: newMessageId,
+                        speaker,
+                        text,
+                        isPartial: true,
+                        isFinal: false,
+                    });
+                }
             } else {
                 newMessages.push({
-                    id: this.messageIdCounter++,
+                    id: newMessageId,
                     speaker,
                     text,
                     isPartial: true,
@@ -213,17 +234,27 @@ export class SttView extends LitElement {
                 if (existingMsg.isFinal && !existingMsg.isPartial) {
                     // Merge with previous final message
                     const mergedText = `${existingMsg.text} ${text}`.trim();
+                    const oldMessageId = existingMsg.id;
+
+                    // Clear old translations - they are for old text, not merged text
+                    // The merged text needs its own translation
+                    const { [oldMessageId]: _, ...remainingTranslations } = this.translations;
+                    this.translations = remainingTranslations;
+
                     newMessages[targetIdx] = {
                         ...existingMsg,
-                        id: crypto.randomUUID(),  // Generate new unique ID to prevent translation key collision
+                        id: newMessageId,  // Use the new ID created at the beginning
                         text: mergedText,
                         isPartial: false,
                         isFinal: true,
                     };
+
+                    // Note: Translation for merged text will be triggered via updated() -> triggerTranslations()
+                    // after the messages array is updated
                 } else {
-                    // Previous message is partial - create new message
+                    // Previous message is partial - create new message with new ID
                     newMessages.push({
-                        id: this.messageIdCounter++,
+                        id: newMessageId,
                         speaker,
                         text,
                         isPartial: false,
@@ -232,7 +263,7 @@ export class SttView extends LitElement {
                 }
             } else {
                 newMessages.push({
-                    id: this.messageIdCounter++,
+                    id: newMessageId,
                     speaker,
                     text,
                     isPartial: false,
@@ -298,12 +329,26 @@ export class SttView extends LitElement {
 
         this._pendingTranslations.add(messageId);
 
+        console.log(`[SttView] Requesting translation for messageId=${messageId}, text="${text.substring(0, 50)}..."`);
+
         try {
             const result = await window.api.translation.translate(
                 text,
                 this.translationLanguage,
                 'auto'
             );
+
+            console.log(`[SttView] Translation response for messageId=${messageId}: "${result.translatedText ? result.translatedText.substring(0, 50) : 'EMPTY'}"`);
+
+            // Check if translation was successful
+            if (!result.success) {
+                console.warn(`[SttView] Translation failed: ${result.error}`);
+                this._pendingTranslations.delete(messageId);
+                // Still store the original text to indicate translation was attempted but failed
+                this.translations = { ...this.translations, [messageId]: `[Translation unavailable: ${result.error}]` };
+                this.requestUpdate();
+                return null;
+            }
 
             this._translationCache.set(cacheKey, result.translatedText);
             this._pendingTranslations.delete(messageId);
@@ -371,6 +416,11 @@ export class SttView extends LitElement {
                         const wrapperClass = this.getSpeakerClass(msg.speaker);
                         const translatedText = this.translations[msg.id];
                         const isPending = this._pendingTranslations.has(msg.id);
+
+                        // Debug logging
+                        if (msg.id <= 3) {
+                            console.log(`[SttView] Render: msg.id=${msg.id}, isFinal=${msg.isFinal}, showTranslation=${this.showTranslation}, hasTranslation=${!!translatedText}, text="${msg.text.substring(0, 30)}..."`);
+                        }
 
                         return html`
                             <div class="message-wrapper ${wrapperClass}">
