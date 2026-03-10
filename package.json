@@ -1,7 +1,7 @@
 {
     "name": "pickle-glass",
-    "productName": "Glass",
-    "version": "0.2.4",
+    "productName": "TPGlass",
+    "version": "0.5.9",
     "description": "Cl*ely for Free",
     "main": "src/index.js",
     "scripts": {
