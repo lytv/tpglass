@@ -90,12 +90,13 @@ export class SttView extends LitElement {
         }
 
         .translated-text {
-            font-size: 11px;
-            padding: 4px 8px;
+            font-size: 14px;
+            padding: 6px 10px;
             border-radius: 8px;
             background: rgba(255, 193, 7, 0.2);
-            color: rgba(255, 193, 7, 0.9);
+            color: rgba(255, 193, 7, 0.95);
             font-style: italic;
+            cursor: pointer;
         }
 
         .message-wrapper.them .translated-text {
@@ -121,6 +122,61 @@ export class SttView extends LitElement {
             font-size: 12px;
             font-style: italic;
         }
+
+        .translation-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .translation-modal {
+            background: #1e1e1e;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 90%;
+            max-height: 80%;
+            overflow: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            color: #ffc107;
+            font-weight: 500;
+        }
+
+        .modal-header button {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .modal-header button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .modal-content .original {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 12px;
+        }
+
+        .modal-content .translated {
+            font-size: 18px;
+            color: #ffc107;
+            font-weight: 500;
+        }
     `;
 
     static properties = {
@@ -130,6 +186,7 @@ export class SttView extends LitElement {
         translationLanguage: { type: String },
         translationSettingsLoaded: { type: Boolean },
         translations: { type: Object, state: true },
+        expandedTranslation: { type: Object, state: true },
     };
 
     constructor() {
@@ -140,6 +197,7 @@ export class SttView extends LitElement {
         this.translationLanguage = 'en';
         this.translationSettingsLoaded = false;
         this.translations = {};
+        this.expandedTranslation = null;
         this.messageIdCounter = 0;
         this._shouldScrollAfterUpdate = false;
         this._translationCache = new Map();
@@ -166,6 +224,7 @@ export class SttView extends LitElement {
     resetTranscript() {
         this.sttMessages = [];
         this.translations = {};
+        this.expandedTranslation = null;
         this._translationCache.clear();
         this._pendingTranslations.clear();
         this.requestUpdate();
@@ -292,6 +351,10 @@ export class SttView extends LitElement {
 
     getSpeakerClass(speaker) {
         return speaker.toLowerCase() === 'me' ? 'me' : 'them';
+    }
+
+    _handleTranslationClick(msg) {
+        this.expandedTranslation = msg;
     }
 
     getTranscriptText() {
@@ -429,7 +492,7 @@ export class SttView extends LitElement {
                                 </div>
                                 ${this.showTranslation && msg.isFinal ? html`
                                     ${translatedText ? html`
-                                        <div class="translated-text">${translatedText}</div>
+                                        <div class="translated-text" @click="${() => this._handleTranslationClick(msg)}">${translatedText}</div>
                                     ` : isPending ? html`
                                         <div class="translation-loading">Translating...</div>
                                     ` : ''}
@@ -439,6 +502,20 @@ export class SttView extends LitElement {
                     })
                 }
             </div>
+            ${this.expandedTranslation ? html`
+                <div class="translation-modal-overlay" @click="${() => this.expandedTranslation = null}">
+                    <div class="translation-modal" @click="${(e) => e.stopPropagation()}">
+                        <div class="modal-header">
+                            <span>Translation</span>
+                            <button @click="${() => this.expandedTranslation = null}">✕</button>
+                        </div>
+                        <div class="modal-content">
+                            <p class="original">${this.expandedTranslation.text}</p>
+                            <p class="translated">${this.translations[this.expandedTranslation.id]}</p>
+                        </div>
+                    </div>
+                </div>
+            ` : ''}
         `;
     }
 }
