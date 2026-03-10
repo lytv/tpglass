@@ -287,11 +287,11 @@ export class SttView extends LitElement {
                 });
             }
         } else if (isFinal) {
-            // Merge only with previous FINAL message from same speaker (not partials)
+            // Handle final message: merge with previous final, replace previous partial
             if (targetIdx !== -1) {
                 const existingMsg = newMessages[targetIdx];
                 if (existingMsg.isFinal && !existingMsg.isPartial) {
-                    // Merge with previous final message
+                    // Previous message is final - merge with it
                     const mergedText = `${existingMsg.text} ${text}`.trim();
                     const oldMessageId = existingMsg.id;
 
@@ -310,8 +310,23 @@ export class SttView extends LitElement {
 
                     // Note: Translation for merged text will be triggered via updated() -> triggerTranslations()
                     // after the messages array is updated
+                } else if (existingMsg.isPartial) {
+                    // Previous message is partial - replace it with final (discard partial text)
+                    const oldMessageId = existingMsg.id;
+
+                    // Clear old translations - the partial had different text
+                    const { [oldMessageId]: _, ...remainingTranslations } = this.translations;
+                    this.translations = remainingTranslations;
+
+                    newMessages[targetIdx] = {
+                        ...existingMsg,
+                        id: newMessageId,
+                        text: text,  // Use the new final text, not merged
+                        isPartial: false,
+                        isFinal: true,
+                    };
                 } else {
-                    // Previous message is partial - create new message with new ID
+                    // No existing message or other case - create new message
                     newMessages.push({
                         id: newMessageId,
                         speaker,
