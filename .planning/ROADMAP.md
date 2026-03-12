@@ -104,7 +104,7 @@
 | 05.2 - Microphone Toggle Button | 1/1 | Complete    | 2026-03-09 |
 | 05.3 - Add Action Buttons to Transcript Modal | 2/2 | Complete    | 2026-03-12 |
 | 05.3.1 - Custom Prompts Settings | 2/2 | Complete    | 2026-03-12 |
-| 05.4 - Multi-Select Transcript Detail Display | 2/2 | Complete | 2026-03-12 |
+| 05.4 - Multi-Select Transcript Detail Display | 2/2 | Complete    | 2026-03-12 |
 
 ---
 
@@ -116,7 +116,7 @@
 
 **Requirements**: None specified
 **Depends on:** Phase 5
-**Plans:** 2/2 Complete
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 05.4-01-PLAN.md — Checkbox selection UI with hover reveal, multi-panel modal with horizontal scroll
