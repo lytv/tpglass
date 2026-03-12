@@ -103,6 +103,7 @@
 | 05.1 - STT Language Configuration | 1/1 | Complete | 2026-03-08 |
 | 05.2 - Microphone Toggle Button | 1/1 | Complete    | 2026-03-09 |
 | 05.3 - Add Action Buttons to Transcript Modal | 2/2 | Complete    | 2026-03-12 |
+| 05.3.1 - Custom Prompts Settings | 0/2 | In Progress | - |
 
 ---
 
@@ -122,13 +123,15 @@ Plans:
 
 ### Phase 05.3.1: Custom Prompts Settings (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
+**Goal:** Implement Custom Prompts Settings - allow users to create, edit, delete custom AI prompts in Settings, and execute them from the Custom Prompt modal in SttView.
+
+**Requirements**: None specified
 **Depends on:** Phase 5.3
-**Plans:** 0 plans
+**Plans:** 2/2 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 05.3.1 to break down)
+- [ ] 05.3.1-01-PLAN.md — Backend service with runCustomPrompt method, IPC handler, preload bridge
+- [ ] 05.3.1-02-PLAN.md — Settings UI section and SttView modal with dropdown + execution
 
 ### Phase 05.2: Add Microphone Toggle Button to prevent acoustic leakage (INSERTED)
 
