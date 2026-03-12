@@ -99,10 +99,10 @@
 | 2 - Translation Service | 1/1 | Complete | 2026-03-07 |
 | 3 - Settings UI | 1/1 | Complete | 2026-03-07 |
 | 4 - Display Integration | 1/1 | Complete | 2026-03-07 |
-| 5 - Integration & Polish | 1/1 | Complete | 2026-03-07 |
+| 5 - Integration & Polish | 1/1 | Complete   | 2026-03-12 |
 | 05.1 - STT Language Configuration | 1/1 | Complete | 2026-03-08 |
 | 05.2 - Microphone Toggle Button | 1/1 | Complete    | 2026-03-09 |
-| 05.3 - Add Action Buttons to Transcript Modal | 2/2 | In Progress | — |
+| 05.3 - Add Action Buttons to Transcript Modal | 1/2 | In Progress | — |
 
 ---
 
@@ -114,11 +114,11 @@
 
 **Requirements**: None specified
 **Depends on:** Phase 5
-**Plans:** 2 plans
+**Plans:** 1/1 plans complete
 
 Plans:
 - [x] 05.3-01-PLAN.md — Add 3 action buttons to modal, inline edit, summarize/custom-prompt modals
-- [x] 05.3-02-PLAN.md — Backend summarize service with IPC handlers
+- [ ] 05.3-02-PLAN.md — Backend summarize service with IPC handlers
 
 ### Phase 05.2: Add Microphone Toggle Button to prevent acoustic leakage (INSERTED)
 
