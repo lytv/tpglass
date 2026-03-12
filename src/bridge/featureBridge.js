@@ -51,6 +51,11 @@ module.exports = {
       return await summarizeService.summarize({ originalText, translatedText });
     });
 
+    // Custom prompt IPC handler
+    ipcMain.handle('custom-prompt:run', async (event, { prompt, transcriptText }) => {
+      return await summarizeService.runCustomPrompt({ prompt, transcriptText });
+    });
+
     ipcMain.handle('settings:get-model-settings', async () => await settingsService.getModelSettings());
     ipcMain.handle('settings:clear-api-key', async (e, { provider }) => await settingsService.clearApiKey(provider));
     ipcMain.handle('settings:set-selected-model', async (e, { type, modelId }) => await settingsService.setSelectedModel(type, modelId));    
