@@ -102,20 +102,23 @@
 | 5 - Integration & Polish | 1/1 | Complete | 2026-03-07 |
 | 05.1 - STT Language Configuration | 1/1 | Complete | 2026-03-08 |
 | 05.2 - Microphone Toggle Button | 1/1 | Complete    | 2026-03-09 |
+| 05.3 - Add Action Buttons to Transcript Modal | 2/2 | In Progress | — |
 
 ---
 
-*Roadmap updated: 2026-03-09*
+*Roadmap updated: 2026-03-12*
 
 ### Phase 05.3: Add Action Buttons to Transcript Detail Modal (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
+**Goal:** Add action buttons (Edit, Summarize, Custom Prompt) to the translation detail modal in SttView.js. Users can edit transcripts inline, generate summaries via LLM, and use custom prompts.
+
+**Requirements**: None specified
 **Depends on:** Phase 5
-**Plans:** 0 plans
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 05.3 to break down)
+- [x] 05.3-01-PLAN.md — Add 3 action buttons to modal, inline edit, summarize/custom-prompt modals
+- [x] 05.3-02-PLAN.md — Backend summarize service with IPC handlers
 
 ### Phase 05.2: Add Microphone Toggle Button to prevent acoustic leakage (INSERTED)
 
