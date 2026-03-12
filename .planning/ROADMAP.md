@@ -120,6 +120,16 @@ Plans:
 - [x] 05.3-01-PLAN.md — Add 3 action buttons to modal, inline edit, summarize/custom-prompt modals
 - [x] 05.3-02-PLAN.md — Backend summarize service with IPC handlers
 
+### Phase 05.3.1: Custom Prompts Settings (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 5.3
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 05.3.1 to break down)
+
 ### Phase 05.2: Add Microphone Toggle Button to prevent acoustic leakage (INSERTED)
 
 **Goal:** Add a microphone toggle button on the Listen view UI to allow users to turn off microphone input to prevent acoustic leakage when they only want transcription from system audio.

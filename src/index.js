@@ -20,7 +20,6 @@ const authService = require('./features/common/services/authService');
 const path = require('node:path');
 const express = require('express');
 const fetch = require('node-fetch');
-const { autoUpdater } = require('electron-updater');
 const { EventEmitter } = require('events');
 const askService = require('./features/ask/askService');
 const settingsService = require('./features/settings/settingsService');
@@ -695,6 +694,7 @@ async function startWebStack() {
 
 // Auto-update initialization
 async function initAutoUpdater() {
+    const { autoUpdater } = require('electron-updater');
     if (process.env.NODE_ENV === 'development') {
         console.log('Development environment, skipping auto-updater.');
         return;

@@ -60,6 +60,7 @@ None yet.
 
 ### Roadmap Evolution
 
+- Phase 05.3.1 inserted after Phase 05.3: Custom Prompts Settings (URGENT)
 - Phase 05.3 inserted after Phase 5: Add Action Buttons to Transcript Detail Modal (URGENT)
 - Phase 05.2 inserted after Phase 5: Add Microphone Toggle Button to prevent acoustic leakage (URGENT)
 - Phase 05.1 inserted after Phase 5: Thêm cấu hình ngôn ngữ STT cho Deepgram (URGENT)

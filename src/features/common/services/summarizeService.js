@@ -1,5 +1,6 @@
 const { createLLM } = require('../ai/factory');
 const modelStateService = require('./modelStateService');
+const settingsService = require('../../settings/settingsService');
 
 /**
  * SummarizeService - Backend service for generating summaries from transcript text
@@ -28,6 +29,10 @@ class SummarizeService {
         }
 
         try {
+            // Get user's translation language from settings
+            const translationSettings = await settingsService.getTranslationSettings();
+            const targetLanguage = translationSettings.language || 'en';
+
             // Get API key and model info
             const modelInfo = await modelStateService.getCurrentModelInfo('llm');
             if (!modelInfo || !modelInfo.apiKey) {
@@ -43,7 +48,7 @@ class SummarizeService {
             }
 
             // Build prompt for summary
-            const prompt = this._buildSummaryPrompt(originalText, translatedText);
+            const prompt = this._buildSummaryPrompt(originalText, translatedText, targetLanguage);
 
             console.log(`[SummarizeService] Summarizing via ${modelInfo.provider} using ${modelInfo.model}`);
 
@@ -91,10 +96,11 @@ class SummarizeService {
      * Build the summary prompt
      * @param {string} originalText - Original transcript
      * @param {string} translatedText - Translated text
+     * @param {string} targetLanguage - Target language code (e.g., 'en', 'ja', 'vi')
      * @returns {string} - Formatted prompt
      */
-    _buildSummaryPrompt(originalText, translatedText) {
-        let prompt = `Analyze the following transcript and provide a summary in this exact format:
+    _buildSummaryPrompt(originalText, translatedText, targetLanguage) {
+        let prompt = `Analyze the following transcript and provide a summary in ${targetLanguage.toUpperCase()} language in this exact format:
 
 1. TLDR: [1-2 sentence summary]
 2. KEY POINTS:

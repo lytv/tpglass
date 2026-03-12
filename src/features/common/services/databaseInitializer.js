@@ -7,7 +7,14 @@ const config = require('../config/config');
 class DatabaseInitializer {
     constructor() {
         this.isInitialized = false;
-        
+        this.dbPath = null;
+        this.dataDir = null;
+        this.sourceDbPath = null;
+    }
+
+    _initPaths() {
+        if (this.dbPath) return;
+
         // 최종적으로 사용될 DB 경로 (쓰기 가능한 위치)
         const userDataPath = app.getPath('userData');
         // In both development and production mode, the database is stored in the userData directory:
@@ -23,6 +30,7 @@ class DatabaseInitializer {
     }
 
     ensureDatabaseExists() {
+        this._initPaths();
         if (!fs.existsSync(this.dbPath)) {
             console.log(`[DB] Database not found at ${this.dbPath}. Preparing to create new database...`);
 
@@ -74,6 +82,7 @@ class DatabaseInitializer {
     }
 
     async ensureDataDirectory() {
+        this._initPaths();
         try {
             if (!fs.existsSync(this.dataDir)) {
                 fs.mkdirSync(this.dataDir, { recursive: true });
@@ -88,6 +97,7 @@ class DatabaseInitializer {
     }
 
     async checkDatabaseExists() {
+        this._initPaths();
         try {
             const exists = fs.existsSync(this.dbPath);
             console.log('[DatabaseInitializer] Database file check:', { path: this.dbPath, exists });
@@ -175,6 +185,7 @@ class DatabaseInitializer {
     }
 
     async getStatus() {
+        this._initPaths();
         return {
             isInitialized: this.isInitialized,
             dbPath: this.dbPath,
@@ -185,6 +196,7 @@ class DatabaseInitializer {
     }
 
     async reset() {
+        this._initPaths();
         try {
             console.log('[DatabaseInitializer] Resetting database...');
             
@@ -216,6 +228,7 @@ class DatabaseInitializer {
     }
 
     getDatabasePath() {
+        this._initPaths();
         return this.dbPath;
     }
 }
