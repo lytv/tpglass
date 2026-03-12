@@ -17,6 +17,7 @@ const listenService = require('../features/listen/listenService');
 const permissionService = require('../features/common/services/permissionService');
 const encryptionService = require('../features/common/services/encryptionService');
 const translationService = require('../features/common/services/translationService');
+const summarizeService = require('../features/common/services/summarizeService');
 
 // Store instance for path memory
 const pathStore = new Store({ name: 'path-settings' });
@@ -43,6 +44,11 @@ module.exports = {
     });
     ipcMain.handle('translation:getSettings', async () => {
       return await settingsService.getTranslationSettings();
+    });
+
+    // Summarize IPC handler
+    ipcMain.handle('summarize:summarize', async (event, { originalText, translatedText }) => {
+      return await summarizeService.summarize({ originalText, translatedText });
     });
 
     ipcMain.handle('settings:get-model-settings', async () => await settingsService.getModelSettings());
