@@ -330,6 +330,13 @@ contextBridge.exposeInMainWorld('api', {
     removeOnTranslationSettingsUpdated: (callback) => ipcRenderer.removeListener('translation-settings-updated', callback)
   },
 
+  // Summarize API
+  summarize: {
+    // Summarize transcript
+    summarize: (originalText, translatedText) =>
+      ipcRenderer.invoke('summarize:summarize', { originalText, translatedText }),
+  },
+
   // STT Language API
   stt: {
     getLanguage: () => ipcRenderer.invoke('settings:getSttLanguage'),
