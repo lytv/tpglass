@@ -333,6 +333,141 @@ export class SttView extends LitElement {
             background: rgba(255, 255, 255, 0.1);
             color: white;
         }
+
+        /* Multi-select checkbox styles */
+        .transcript-checkbox {
+            margin-right: 8px;
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            accent-color: #ffc107;
+        }
+
+        .checkbox-wrapper {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .transcription-container:hover .checkbox-wrapper,
+        .transcription-container.is-hovering .checkbox-wrapper {
+            opacity: 1;
+        }
+
+        .select-all-btn {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.4);
+            color: #ffc107;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .transcription-container:hover .select-all-btn {
+            opacity: 1;
+        }
+
+        .select-all-btn:hover {
+            background: rgba(255, 193, 7, 0.3);
+        }
+
+        /* Multi-select modal styles */
+        .multi-select-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1200;
+        }
+
+        .multi-select-modal {
+            background: #1e1e1e;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 95%;
+            max-height: 85%;
+            width: auto;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .multi-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            color: #ffc107;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+
+        .selection-count {
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+            font-weight: normal;
+        }
+
+        .multi-panel-container {
+            display: flex;
+            flex-direction: row;
+            gap: 16px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            max-height: 60vh;
+            padding: 8px;
+            flex: 1;
+        }
+
+        .multi-panel-container::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .multi-panel-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+
+        .multi-panel-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        .multi-panel {
+            flex: 0 0 auto;
+            min-width: 280px;
+            max-width: 350px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .multi-panel .panel-speaker {
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .multi-panel .panel-original {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 12px;
+            white-space: pre-wrap;
+        }
+
+        .multi-panel .panel-translated {
+            font-size: 14px;
+            color: #ffc107;
+            font-weight: 500;
+            white-space: pre-wrap;
+        }
     `;
 
     static properties = {
@@ -356,6 +491,10 @@ export class SttView extends LitElement {
         customPromptResult: { type: String, state: true },
         customPromptLoading: { type: Boolean, state: true },
         customPromptError: { type: String, state: true },
+        // Multi-select state
+        selectedTranscriptIds: { type: Array, state: true },
+        isHoveringList: { type: Boolean, state: true },
+        multiSelectModalOpen: { type: Boolean, state: true },
     };
 
     constructor() {
@@ -386,6 +525,11 @@ export class SttView extends LitElement {
         this.customPromptLoading = false;
         this.customPromptError = '';
 
+        // Multi-select state initialization
+        this.selectedTranscriptIds = [];
+        this.isHoveringList = false;
+        this.multiSelectModalOpen = false;
+
         this.handleSttUpdate = this.handleSttUpdate.bind(this);
     }
 
@@ -410,6 +554,8 @@ export class SttView extends LitElement {
         this.expandedTranslation = null;
         this._translationCache.clear();
         this._pendingTranslations.clear();
+        // Clear multi-select state
+        this.selectedTranscriptIds = [];
         this.requestUpdate();
     }
 
@@ -551,14 +697,71 @@ export class SttView extends LitElement {
         return speaker.toLowerCase() === 'me' ? 'me' : 'them';
     }
 
+    // Multi-select handlers
+    _toggleSelection(msgId) {
+        const ids = [...this.selectedTranscriptIds];
+        const idx = ids.indexOf(msgId);
+        if (idx >= 0) {
+            ids.splice(idx, 1);
+        } else {
+            ids.push(msgId);
+        }
+        this.selectedTranscriptIds = ids;
+    }
+
+    _toggleSelectAll() {
+        const finalIds = this._getFinalMessageIds();
+        if (this.selectedTranscriptIds.length === finalIds.length) {
+            this.selectedTranscriptIds = [];
+        } else {
+            this.selectedTranscriptIds = finalIds;
+        }
+    }
+
+    _getFinalMessageIds() {
+        return this.sttMessages
+            .filter(m => m.isFinal)
+            .map(m => m.id);
+    }
+
     _handleTranslationClick(msg) {
-        this.expandedTranslation = msg;
-        // Reset action states when modal closes
-        this._isEditing = false;
-        this._editText = '';
-        this._summaryContent = null;
-        this._showSummaryModal = false;
-        this._showCustomPromptModal = false;
+        if (this.selectedTranscriptIds.length > 0) {
+            // Multi-select active - switch to single view
+            this._switchToSingleView(msg.id);
+        } else {
+            this.expandedTranslation = msg;
+            // Reset action states when modal closes
+            this._isEditing = false;
+            this._editText = '';
+            this._summaryContent = null;
+            this._showSummaryModal = false;
+            this._showCustomPromptModal = false;
+        }
+    }
+
+    _closeMultiSelectModal() {
+        this.multiSelectModalOpen = false;
+        // Clear selection as per requirement
+        this.selectedTranscriptIds = [];
+    }
+
+    _switchToSingleView(msgId) {
+        const msg = this.sttMessages.find(m => m.id === msgId);
+        if (msg) {
+            this.multiSelectModalOpen = false;
+            this.selectedTranscriptIds = [];
+            this._handleTranslationClick(msg);
+        }
+    }
+
+    _handleMultiSelectEdit() {
+        // Edit the first selected transcript
+        const firstId = this.selectedTranscriptIds[0];
+        if (firstId) {
+            this._switchToSingleView(firstId);
+            // After switching to single view, open edit mode
+            setTimeout(() => this._handleEdit(), 50);
+        }
     }
 
     // Action button handlers
@@ -832,7 +1035,14 @@ export class SttView extends LitElement {
         }
 
         return html`
-            <div class="transcription-container">
+            <div class="transcription-container"
+                @mouseenter="${() => this.isHoveringList = true}"
+                @mouseleave="${() => this.isHoveringList = false}">
+                ${this.isHoveringList && this.sttMessages.length > 0 ? html`
+                    <button class="select-all-btn" @click="${() => this._toggleSelectAll()}">
+                        ${this.selectedTranscriptIds.length === this._getFinalMessageIds().length ? 'Deselect All' : 'Select All'}
+                    </button>
+                ` : ''}
                 ${this.sttMessages.length === 0
                     ? html`<div class="empty-state">Waiting for speech...</div>`
                     : this.sttMessages.map(msg => {
@@ -846,13 +1056,21 @@ export class SttView extends LitElement {
                         }
 
                         return html`
-                            <div class="message-wrapper ${wrapperClass}">
+                            <div class="message-wrapper ${wrapperClass}" @click="${() => this._handleTranslationClick(msg)}">
+                                ${this.isHoveringList ? html`
+                                    <input
+                                        type="checkbox"
+                                        class="transcript-checkbox checkbox-wrapper"
+                                        .checked="${this.selectedTranscriptIds.includes(msg.id)}"
+                                        @click="${(e) => e.stopPropagation()}"
+                                        @change="${() => this._toggleSelection(msg.id)}">
+                                ` : ''}
                                 <div class="stt-message ${wrapperClass}">
                                     <span class="original-text">${msg.text}</span>
                                 </div>
                                 ${this.showTranslation && msg.isFinal ? html`
                                     ${translatedText ? html`
-                                        <div class="translated-text" @click="${() => this._handleTranslationClick(msg)}">${translatedText}</div>
+                                        <div class="translated-text" @click="${(e) => { e.stopPropagation(); this._handleTranslationClick(msg); }}">${translatedText}</div>
                                     ` : isPending ? html`
                                         <div class="translation-loading">Translating...</div>
                                     ` : ''}
@@ -888,6 +1106,38 @@ export class SttView extends LitElement {
                                 <p class="original">${this.expandedTranslation.text}</p>
                                 <p class="translated">${this.translations[this.expandedTranslation.id]}</p>
                             `}
+                        </div>
+                    </div>
+                </div>
+            ` : ''}
+            ${this.multiSelectModalOpen ? html`
+                <div class="multi-select-modal-overlay" @click="${() => this._closeMultiSelectModal()}">
+                    <div class="multi-select-modal" @click="${(e) => e.stopPropagation()}">
+                        <div class="multi-panel-header">
+                            <div>
+                                <span>Transcript Details</span>
+                                <span class="selection-count">(${this.selectedTranscriptIds.length} selected)</span>
+                            </div>
+                            <div class="action-buttons">
+                                <button class="action-btn" @click="${() => this._handleMultiSelectEdit()}" title="Edit First">Edit</button>
+                                <button class="action-btn" @click="${() => this._handleSummarize()}" title="Summarize">Summarize</button>
+                                <button class="action-btn" @click="${() => this._handleCustomPrompt()}" title="Custom Prompt">Prompt</button>
+                            </div>
+                            <button @click="${() => this._closeMultiSelectModal()}">Close</button>
+                        </div>
+                        <div class="multi-panel-container">
+                            ${this.selectedTranscriptIds.map(id => {
+                                const msg = this.sttMessages.find(m => m.id === id);
+                                if (!msg) return '';
+                                const translation = this.translations[id];
+                                return html`
+                                    <div class="multi-panel" @click="${(e) => { e.stopPropagation(); this._switchToSingleView(id); }}">
+                                        <div class="panel-speaker">${msg.speaker}</div>
+                                        <div class="panel-original">${msg.text}</div>
+                                        ${translation ? html`<div class="panel-translated">${translation}</div>` : ''}
+                                    </div>
+                                `;
+                            })}
                         </div>
                     </div>
                 </div>
