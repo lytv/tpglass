@@ -104,7 +104,7 @@
 | 05.2 - Microphone Toggle Button | 1/1 | Complete    | 2026-03-09 |
 | 05.3 - Add Action Buttons to Transcript Modal | 2/2 | Complete    | 2026-03-12 |
 | 05.3.1 - Custom Prompts Settings | 2/2 | Complete    | 2026-03-12 |
-| 05.4 - Multi-Select Transcript Detail Display | 2/2 | In Progress | — |
+| 05.4 - Multi-Select Transcript Detail Display | 1/2 | In Progress | — |
 
 ---
 
