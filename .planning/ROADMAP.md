@@ -103,7 +103,7 @@
 | 05.1 - STT Language Configuration | 1/1 | Complete | 2026-03-08 |
 | 05.2 - Microphone Toggle Button | 1/1 | Complete    | 2026-03-09 |
 | 05.3 - Add Action Buttons to Transcript Modal | 2/2 | Complete    | 2026-03-12 |
-| 05.3.1 - Custom Prompts Settings | 0/2 | In Progress | - |
+| 05.3.1 - Custom Prompts Settings | 1/2 | In Progress | - |
 
 ---
 
@@ -130,7 +130,7 @@ Plans:
 **Plans:** 2/2 plans
 
 Plans:
-- [ ] 05.3.1-01-PLAN.md — Backend service with runCustomPrompt method, IPC handler, preload bridge
+- [x] 05.3.1-01-PLAN.md — Backend service with runCustomPrompt method, IPC handler, preload bridge
 - [ ] 05.3.1-02-PLAN.md — Settings UI section and SttView modal with dropdown + execution
 
 ### Phase 05.2: Add Microphone Toggle Button to prevent acoustic leakage (INSERTED)
