@@ -657,7 +657,8 @@ export class SttView extends LitElement {
     }
 
     getPromptById(id) {
-        return this.customPromptPresets.find(p => p.id === id);
+        // Handle type mismatch: dropdown returns string, SQLite returns number
+        return this.customPromptPresets.find(p => p.id == id);
     }
 
     async _handleRunCustomPrompt() {
