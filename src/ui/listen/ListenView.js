@@ -365,6 +365,29 @@ export class ListenView extends LitElement {
             background: rgba(255, 85, 85, 0.2);
         }
 
+        .select-all-button {
+            background: rgba(255, 193, 7, 0.15);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            color: #ffc107;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .select-all-button:hover {
+            background: rgba(255, 193, 7, 0.25);
+        }
+
+        .select-all-button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
         .timer {
             font-family: 'Monaco', 'Menlo', monospace;
             font-size: 10px;
@@ -538,6 +561,7 @@ export class ListenView extends LitElement {
         this.elapsedTime = '00:00';
         this.captureStartTime = null;
         this.timerInterval = null;
+        this._sttViewSelectionInfo = { selectedCount: 0, totalCount: 0, isAllSelected: false, hasMessages: false };
         this.adjustHeightThrottle = null;
         this.isThrottled = false;
         this.copyState = 'idle';
@@ -854,6 +878,18 @@ export class ListenView extends LitElement {
         this.requestUpdate();
     }
 
+    handleToggleSelectAll() {
+        const sttView = this.shadowRoot.querySelector('stt-view');
+        if (sttView && sttView._toggleSelectAll) {
+            sttView._toggleSelectAll();
+            // Update selection info after toggle
+            setTimeout(() => {
+                this._sttViewSelectionInfo = sttView.getSelectionInfo();
+                this.requestUpdate();
+            }, 50);
+        }
+    }
+
     adjustWindowHeightThrottled() {
         if (this.isThrottled) {
             return;
@@ -873,12 +909,25 @@ export class ListenView extends LitElement {
 
         if (changedProperties.has('viewMode')) {
             this.adjustWindowHeight();
+            // Sync selection info from SttView when switching to transcript view
+            if (this.viewMode === 'transcript') {
+                const sttView = this.shadowRoot.querySelector('stt-view');
+                if (sttView && sttView.getSelectionInfo) {
+                    this._sttViewSelectionInfo = sttView.getSelectionInfo();
+                }
+            }
         }
     }
 
     handleSttMessagesUpdated(event) {
         // Handle messages update from SttView if needed
         this.adjustWindowHeightThrottled();
+        // Update selection info
+        const sttView = this.shadowRoot.querySelector('stt-view');
+        if (sttView && sttView.getSelectionInfo) {
+            this._sttViewSelectionInfo = sttView.getSelectionInfo();
+            this.requestUpdate();
+        }
     }
 
     firstUpdated() {
@@ -977,6 +1026,14 @@ export class ListenView extends LitElement {
                                           <line x1="8" y1="23" x2="16" y2="23" />
                                       </svg>
                                   `}
+                        </button>
+                        <button
+                            class="select-all-button"
+                            @click=${this.handleToggleSelectAll}
+                            title="Select/Deselect All Transcripts"
+                            ?disabled=${!this._sttViewSelectionInfo?.hasMessages}
+                        >
+                            ${this._sttViewSelectionInfo?.isAllSelected ? '☑' : '☐'}
                         </button>
                     </div>
                 </div>

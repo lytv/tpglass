@@ -74,6 +74,18 @@ export class SttView extends LitElement {
             max-width: 80%;
         }
 
+        /* Row container for checkbox + message text - aligns them horizontally */
+        .message-content {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 4px;
+        }
+
+        .message-content .stt-message {
+            flex: 1;
+        }
+
         .message-wrapper.them {
             align-self: flex-start;
             margin-right: auto;
@@ -336,7 +348,8 @@ export class SttView extends LitElement {
 
         /* Multi-select checkbox styles */
         .transcript-checkbox {
-            margin-right: 8px;
+            margin-right: 4px;
+            margin-top: 3px;
             cursor: pointer;
             width: 16px;
             height: 16px;
@@ -353,21 +366,23 @@ export class SttView extends LitElement {
             opacity: 1;
         }
 
+        .transcript-header {
+            display: flex;
+            justify-content: flex-end;
+            padding: 8px 12px 4px 12px;
+            flex-shrink: 0;
+        }
+
         .select-all-btn {
             background: rgba(255, 193, 7, 0.2);
             border: 1px solid rgba(255, 193, 7, 0.4);
             color: #ffc107;
-            padding: 4px 12px;
+            padding: 4px 8px;
             border-radius: 4px;
-            font-size: 12px;
+            font-size: 16px;
             cursor: pointer;
-            margin-bottom: 8px;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-        }
-
-        .transcription-container:hover .select-all-btn {
-            opacity: 1;
+            line-height: 1;
+            transition: all 0.2s ease;
         }
 
         .select-all-btn:hover {
@@ -716,12 +731,28 @@ export class SttView extends LitElement {
         } else {
             this.selectedTranscriptIds = finalIds;
         }
+        this.requestUpdate();
+        // Dispatch event for ListenView to update selection info
+        this.dispatchEvent(new CustomEvent('selection-changed', {
+            bubbles: true,
+            composed: true
+        }));
+    }
+
+    // Public method for ListenView to get selection state
+    getSelectionInfo() {
+        const finalIds = this._getFinalMessageIds();
+        return {
+            selectedCount: this.selectedTranscriptIds.length,
+            totalCount: finalIds.length,
+            isAllSelected: this.selectedTranscriptIds.length === finalIds.length && finalIds.length > 0,
+            hasMessages: this.sttMessages.length > 0
+        };
     }
 
     _getFinalMessageIds() {
-        return this.sttMessages
-            .filter(m => m.isFinal)
-            .map(m => m.id);
+        // Return ALL message IDs (including partial) - not just final ones
+        return this.sttMessages.map(m => m.id);
     }
 
     _handleTranslationClick(msg) {
@@ -834,14 +865,18 @@ export class SttView extends LitElement {
     }
 
     async _handleSummarize() {
-        // Determine if multi-select mode
+        // Determine if multi-select mode FIRST (before closing modal)
         const hasSelection = this.selectedTranscriptIds.length > 0;
         const isMultiSelect = hasSelection && this.selectedTranscriptIds.length > 1;
         const isSingleSelect = hasSelection && this.selectedTranscriptIds.length === 1;
 
-        // For multi-select modal, we don't need expandedTranslation
-        // For single select or original behavior, we need it
+        // Check if we have content to summarize
         if (!isMultiSelect && !isSingleSelect && !this.expandedTranslation) return;
+
+        // Close edit panel, translation modal, and multi-select modal if open
+        this._isEditing = false;
+        this.expandedTranslation = null;
+        this.multiSelectModalOpen = false;
 
         this._isSummarizing = true;
         this._showSummaryModal = true;
@@ -893,6 +928,11 @@ export class SttView extends LitElement {
     }
 
     async _handleCustomPrompt() {
+        // Close edit panel, translation modal, and multi-select modal if open
+        this._isEditing = false;
+        this.expandedTranslation = null;
+        this.multiSelectModalOpen = false;
+
         this._showCustomPromptModal = true;
         this.customPromptResult = '';
         this.customPromptError = '';
@@ -923,17 +963,21 @@ export class SttView extends LitElement {
     async _handleRunCustomPrompt() {
         if (!this.selectedPromptId) return;
 
-        // Determine if multi-select mode
+        // Determine if multi-select mode FIRST (before closing modal)
         const hasSelection = this.selectedTranscriptIds.length > 0;
         const isMultiSelect = hasSelection && this.selectedTranscriptIds.length > 1;
         const isSingleSelect = hasSelection && this.selectedTranscriptIds.length === 1;
 
-        // For multi-select modal, we don't need expandedTranslation
-        // For single select or original behavior, we need it
+        // Check if we have content to process
         if (!isMultiSelect && !isSingleSelect && !this.expandedTranslation) return;
 
         const prompt = this.getPromptById(this.selectedPromptId);
         if (!prompt) return;
+
+        // Close edit panel, translation modal, and multi-select modal if open
+        this._isEditing = false;
+        this.expandedTranslation = null;
+        this.multiSelectModalOpen = false;
 
         this.customPromptLoading = true;
         this.customPromptError = '';
@@ -1119,11 +1163,6 @@ export class SttView extends LitElement {
             <div class="transcription-container"
                 @mouseenter="${() => this.isHoveringList = true}"
                 @mouseleave="${() => this.isHoveringList = false}">
-                ${this.isHoveringList && this.sttMessages.length > 0 ? html`
-                    <button class="select-all-btn" @click="${() => this._toggleSelectAll()}">
-                        ${this.selectedTranscriptIds.length === this._getFinalMessageIds().length ? 'Deselect All' : 'Select All'}
-                    </button>
-                ` : ''}
                 ${this.sttMessages.length === 0
                     ? html`<div class="empty-state">Waiting for speech...</div>`
                     : this.sttMessages.map(msg => {
@@ -1138,16 +1177,18 @@ export class SttView extends LitElement {
 
                         return html`
                             <div class="message-wrapper ${wrapperClass}" @click="${() => this._handleTranslationClick(msg)}">
-                                ${this.isHoveringList ? html`
-                                    <input
-                                        type="checkbox"
-                                        class="transcript-checkbox checkbox-wrapper"
-                                        .checked="${this.selectedTranscriptIds.includes(msg.id)}"
-                                        @click="${(e) => e.stopPropagation()}"
-                                        @change="${() => this._toggleSelection(msg.id)}">
-                                ` : ''}
-                                <div class="stt-message ${wrapperClass}">
-                                    <span class="original-text">${msg.text}</span>
+                                <div class="message-content">
+                                    ${this.isHoveringList ? html`
+                                        <input
+                                            type="checkbox"
+                                            class="transcript-checkbox checkbox-wrapper"
+                                            .checked="${this.selectedTranscriptIds.includes(msg.id)}"
+                                            @click="${(e) => e.stopPropagation()}"
+                                            @change="${() => this._toggleSelection(msg.id)}">
+                                    ` : ''}
+                                    <div class="stt-message ${wrapperClass}">
+                                        <span class="original-text">${msg.text}</span>
+                                    </div>
                                 </div>
                                 ${this.showTranslation && msg.isFinal ? html`
                                     ${translatedText ? html`
