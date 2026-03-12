@@ -725,10 +725,14 @@ export class SttView extends LitElement {
     }
 
     _handleTranslationClick(msg) {
-        if (this.selectedTranscriptIds.length > 0) {
-            // Multi-select active - switch to single view
+        if (this.selectedTranscriptIds.length >= 2) {
+            // Multiple selected (2+) - open multi-select modal
+            this.multiSelectModalOpen = true;
+        } else if (this.selectedTranscriptIds.length === 1) {
+            // Single selected - switch to single view
             this._switchToSingleView(msg.id);
         } else {
+            // No selection - original behavior
             this.expandedTranslation = msg;
             // Reset action states when modal closes
             this._isEditing = false;
@@ -762,6 +766,36 @@ export class SttView extends LitElement {
             // After switching to single view, open edit mode
             setTimeout(() => this._handleEdit(), 50);
         }
+    }
+
+    // Helper to get combined text from multiple selected transcripts
+    _getCombinedText() {
+        // If single transcript selected, return that text
+        if (this.selectedTranscriptIds.length === 1) {
+            const msgId = this.selectedTranscriptIds[0];
+            const msg = this.sttMessages.find(m => m.id === msgId);
+            let text = msg?.text || '';
+
+            if (this.showTranslation && this.translations[msgId]) {
+                text += `\n\nTranslation: ${this.translations[msgId]}`;
+            }
+            return text;
+        }
+
+        // Multiple transcripts - combine all
+        return this.selectedTranscriptIds
+            .map(id => {
+                const msg = this.sttMessages.find(m => m.id === id);
+                if (!msg) return '';
+
+                let text = `${msg.speaker}: ${msg.text}`;
+                if (this.showTranslation && this.translations[id]) {
+                    text += `\n  Translation: ${this.translations[id]}`;
+                }
+                return text;
+            })
+            .filter(t => t)
+            .join('\n\n---\n\n');
     }
 
     // Action button handlers
@@ -800,17 +834,39 @@ export class SttView extends LitElement {
     }
 
     async _handleSummarize() {
-        if (!this.expandedTranslation) return;
+        // Determine if multi-select mode
+        const hasSelection = this.selectedTranscriptIds.length > 0;
+        const isMultiSelect = hasSelection && this.selectedTranscriptIds.length > 1;
+        const isSingleSelect = hasSelection && this.selectedTranscriptIds.length === 1;
+
+        // For multi-select modal, we don't need expandedTranslation
+        // For single select or original behavior, we need it
+        if (!isMultiSelect && !isSingleSelect && !this.expandedTranslation) return;
 
         this._isSummarizing = true;
         this._showSummaryModal = true;
 
         try {
-            const originalText = this.expandedTranslation.text;
-            const translatedText = this.translations[this.expandedTranslation.id] || '';
+            let combinedText;
 
-            // Get both original and translated text
-            const combinedText = `${originalText}\n\nTranslation: ${translatedText}`;
+            if (isMultiSelect) {
+                // Multi-select: combine all selected transcripts
+                combinedText = this._getCombinedText();
+            } else if (isSingleSelect) {
+                // Single from multi-select: get that transcript's text
+                const msgId = this.selectedTranscriptIds[0];
+                const msg = this.sttMessages.find(m => m.id === msgId);
+                let text = msg?.text || '';
+                if (this.showTranslation && this.translations[msgId]) {
+                    text += `\n\nTranslation: ${this.translations[msgId]}`;
+                }
+                combinedText = text;
+            } else {
+                // Original behavior: use expandedTranslation
+                const originalText = this.expandedTranslation.text;
+                const translatedText = this.translations[this.expandedTranslation.id] || '';
+                combinedText = `${originalText}\n\nTranslation: ${translatedText}`;
+            }
 
             // Call summarize API via IPC
             if (window.api && window.api.summarize) {
@@ -865,7 +921,16 @@ export class SttView extends LitElement {
     }
 
     async _handleRunCustomPrompt() {
-        if (!this.selectedPromptId || !this.expandedTranslation) return;
+        if (!this.selectedPromptId) return;
+
+        // Determine if multi-select mode
+        const hasSelection = this.selectedTranscriptIds.length > 0;
+        const isMultiSelect = hasSelection && this.selectedTranscriptIds.length > 1;
+        const isSingleSelect = hasSelection && this.selectedTranscriptIds.length === 1;
+
+        // For multi-select modal, we don't need expandedTranslation
+        // For single select or original behavior, we need it
+        if (!isMultiSelect && !isSingleSelect && !this.expandedTranslation) return;
 
         const prompt = this.getPromptById(this.selectedPromptId);
         if (!prompt) return;
@@ -876,7 +941,23 @@ export class SttView extends LitElement {
         this.requestUpdate();
 
         try {
-            const transcriptText = this.expandedTranslation.text;
+            let transcriptText;
+
+            if (isMultiSelect) {
+                // Multi-select: combine all selected transcripts
+                transcriptText = this._getCombinedText();
+            } else if (isSingleSelect) {
+                // Single from multi-select: get that transcript's text
+                const msgId = this.selectedTranscriptIds[0];
+                const msg = this.sttMessages.find(m => m.id === msgId);
+                transcriptText = msg?.text || '';
+                if (this.showTranslation && this.translations[msgId]) {
+                    transcriptText += `\n\nTranslation: ${this.translations[msgId]}`;
+                }
+            } else {
+                // Original behavior: use expandedTranslation
+                transcriptText = this.expandedTranslation.text;
+            }
 
             if (window.api && window.api.customPrompt) {
                 // Replace {text} placeholder with actual transcript text
