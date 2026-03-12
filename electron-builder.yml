@@ -52,6 +52,14 @@ win:
     signtoolOptions:
       certificateSubjectName: "Glass Dev Code Signing"
 
+# Linux configuration
+linux:
+    category: Utility
+    icon: src/ui/assets/logo.png
+    target:
+        - target: AppImage
+        - target: deb
+
 # NSIS installer configuration for Windows
 nsis:
     oneClick: false
