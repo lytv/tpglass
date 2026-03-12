@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GlassTube - Live Transcript App | Neubrutalism</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        outfit: ['Outfit', 'sans-serif'],
+                        work: ['Work Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#3B82F6',
+                        'primary-dark': '#2563EB',
+                        yellow: '#FFEB3B',
+                        pink: '#FF5252',
+                        cyan: '#00BCD4',
+                        black: '#000000',
+                    },
+                    boxShadow: {
+                        'brutal': '6px 6px 0px 0px #000000',
+                        'brutal-sm': '4px 4px 0px 0px #000000',
+                        'brutal-hover': '8px 8px 0px 0px #000000',
+                        'brutal-accent': '6px 6px 0px 0px #FFEB3B',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background-color: #FAFAF9;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Outfit', sans-serif;
+        }
+        .brutal-card {
+            border: 3px solid #000000;
+            box-shadow: 6px 6px 0px 0px #000000;
+            transition: all 0.2s ease;
+        }
+        .brutal-card:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 8px 8px 0px 0px #000000;
+        }
+        .brutal-button {
+            border: 3px solid #000000;
+            box-shadow: 4px 4px 0px 0px #000000;
+            transition: all 0.2s ease;
+        }
+        .brutal-button:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px 0px #000000;
+        }
+        .brutal-button:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px 0px #000000;
+        }
+        .brutal-badge {
+            border: 2px solid #000000;
+            box-shadow: 3px 3px 0px 0px #000000;
+        }
+        .pattern-dots {
+            background-image: radial-gradient(#000 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .pattern-lines {
+            background-image: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 20px,
+                #00000010 20px,
+                #00000010 21px
+            );
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #FF5252 0%, #FFEB3B 50%, #00BCD4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .color-blob {
+            border: 3px solid #000000;
+            box-shadow: 4px 4px 0px 0px #000000;
+        }
+    </style>
+</head>
+<body class="min-h-screen pattern-dots">
+    <!-- Navigation -->
+    <nav class="py-6 px-8 bg-white border-b-4 border-black">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-yellow border-3 border-black flex items-center justify-center shadow-brutal-sm">
+                    <i data-lucide="glasses" class="w-6 h-6 text-black"></i>
+                </div>
+                <span class="text-2xl font-black text-black font-outfit tracking-tight">GlassTube</span>
+            </div>
+            <div class="hidden md:flex items-center gap-6">
+                <a href="#how-it-works" class="font-bold text-black hover:text-primary transition border-b-2 border-transparent hover:border-primary">How It Works</a>
+                <a href="#download" class="font-bold text-black hover:text-primary transition border-b-2 border-transparent hover:border-primary">Download</a>
+                <a href="#team" class="font-bold text-black hover:text-primary transition border-b-2 border-transparent hover:border-primary">Team</a>
+                <a href="#feedback" class="font-bold text-black hover:text-primary transition border-b-2 border-transparent hover:border-primary">Feedback</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="py-16 px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-12">
+                <div class="inline-block mb-4 px-6 py-3 bg-pink text-black font-bold text-sm border-3 border-black shadow-brutal">
+                    ✨ FREE DOWNLOAD NOW
+                </div>
+                <h1 class="text-5xl md:text-8xl font-black mb-6 tracking-tight">
+                    <span class="gradient-text">SEE EVERY WORD</span><br>
+                    <span class="text-black">IN REAL-TIME</span>
+                </h1>
+                <p class="text-xl md:text-2xl text-gray-700 mb-8 max-w-2xl mx-auto font-medium">
+                    GlassTube captures live audio and displays transcripts instantly. Perfect for meetings, lectures, and accessibility.
+                </p>
+                <div class="flex flex-wrap justify-center gap-3 mb-8">
+                    <span class="brutal-badge bg-yellow px-4 py-2 text-sm font-bold text-black">👨‍💻 DEV</span>
+                    <span class="brutal-badge bg-cyan px-4 py-2 text-sm font-bold text-black">🎓 STUDENT</span>
+                    <span class="brutal-badge bg-pink px-4 py-2 text-sm font-bold text-white">💬 COMMUNICATOR</span>
+                    <span class="brutal-badge bg-green-400 px-4 py-2 text-sm font-bold text-black">📊 BRSE</span>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="#download" class="brutal-button bg-primary px-8 py-4 text-white font-bold text-lg flex items-center justify-center gap-2">
+                        <i data-lucide="download" class="w-5 h-5"></i>
+                        DOWNLOAD FREE
+                    </a>
+                    <a href="#how-it-works" class="brutal-button bg-white px-8 py-4 text-black font-bold text-lg">
+                        LEARN MORE →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Demo Video Placeholder -->
+            <div class="mt-16 max-w-4xl mx-auto">
+                <div class="brutal-card bg-black p-1">
+                    <div class="bg-gray-900 aspect-video flex items-center justify-center relative">
+                        <div class="absolute inset-0 pattern-lines opacity-30"></div>
+                        <div class="text-center z-10">
+                            <div class="w-24 h-24 mx-auto mb-4 bg-yellow border-3 border-black flex items-center justify-center shadow-brutal hover:translate-x-1 hover:translate-y-1 transition-transform cursor-pointer">
+                                <i data-lucide="play" class="w-10 h-10 text-black ml-1"></i>
+                            </div>
+                            <p class="text-white font-bold text-lg">WATCH DEMO</p>
+                        </div>
+                        <!-- Decorative elements -->
+                        <div class="absolute top-4 left-4 w-8 h-8 bg-pink border-2 border-black"></div>
+                        <div class="absolute bottom-4 right-4 w-8 h-8 bg-yellow border-2 border-black"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="py-20 px-8 bg-white border-y-4 border-black">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-4xl md:text-6xl font-black text-center mb-4">
+                <span class="gradient-text">HOW IT WORKS</span>
+            </h2>
+            <p class="text-xl text-center mb-16 font-bold text-gray-700">GET STARTED IN 4 SIMPLE STEPS</p>
+
+            <div class="grid md:grid-cols-4 gap-6">
+                <!-- Step 1 -->
+                <div class="brutal-card bg-yellow p-8 text-center">
+                    <div class="w-16 h-16 mx-auto mb-6 bg-white border-3 border-black flex items-center justify-center shadow-brutal-sm">
+                        <span class="text-3xl font-black">1</span>
+                    </div>
+                    <h3 class="text-xl font-black mb-3 text-black">LISTEN</h3>
+                    <p class="text-gray-800 font-medium">GlassTube captures audio from your microphone or system</p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="brutal-card bg-cyan p-8 text-center">
+                    <div class="w-16 h-16 mx-auto mb-6 bg-white border-3 border-black flex items-center justify-center shadow-brutal-sm">
+                        <span class="text-3xl font-black">2</span>
+                    </div>
+                    <h3 class="text-xl font-black mb-3 text-black">TRANSCRIBE</h3>
+                    <p class="text-gray-800 font-medium">AI converts speech to text in real-time with high accuracy</p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="brutal-card bg-pink p-8 text-center">
+                    <div class="w-16 h-16 mx-auto mb-6 bg-white border-3 border-black flex items-center justify-center shadow-brutal-sm">
+                        <span class="text-3xl font-black text-white">3</span>
+                    </div>
+                    <h3 class="text-xl font-black mb-3 text-black">ASK</h3>
+                    <p class="text-gray-800 font-medium">Query your transcripts using natural language</p>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="brutal-card bg-green-400 p-8 text-center">
+                    <div class="w-16 h-16 mx-auto mb-6 bg-white border-3 border-black flex items-center justify-center shadow-brutal-sm">
+                        <span class="text-3xl font-black">4</span>
+                    </div>
+                    <h3 class="text-xl font-black mb-3 text-black">RECORD</h3>
+                    <p class="text-gray-800 font-medium">Save transcripts and summaries for later reference</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section class="py-20 px-8">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-4xl md:text-6xl font-black text-center mb-16">
+                <span class="gradient-text">POWERFUL FEATURES</span>
+            </h2>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="brutal-card bg-white p-8">
+                    <div class="w-14 h-14 rounded-none bg-yellow flex items-center justify-center mb-6 border-2 border-black">
+                        <i data-lucide="mic" class="w-7 h-7 text-black"></i>
+                    </div>
+                    <h3 class="text-xl font-black mb-3 text-black">LIVE TRANSCRIPTION</h3>
+                    <p class="text-gray-700 font-medium">Real-time speech-to-text with minimal latency</p>
+                </div>
+
+                <div class="brutal-card bg-pink p-8">
+                    <div class="w-14 h-14 rounded-none bg-white flex items-center justify-center mb-6 border-2 border-black">
+                        <i data-lucide="message-circle" class="w-7 h-7 text-black"></i>
+                    </div>
+                    <h3 class="text-xl font-black mb-3 text-black">CHAT WITH TRANSCRIPT</h3>
+                    <p class="text-gray-700 font-medium">Ask questions about your transcripts using AI</p>
+                </div>
+
+                <div class="brutal-card bg-cyan p-8">
+                    <div class="w-14 h-14 rounded-none bg-white flex items-center justify-center mb-6 border-2 border-black">
+                        <i data-lucide="file-text" class="w-7 h-7 text-black"></i>
+                    </div>
+                    <h3 class="text-xl font-black mb-3 text-black">EXPORT & SAVE</h3>
+                    <p class="text-gray-700 font-medium">Export transcripts as TXT, PDF, or Markdown</p>
+                </div>
+
+                <div class="brutal-card bg-green-400 p-8">
+                    <div class="w-14 h-14 rounded-none bg-white flex items-center justify-center mb-6 border-2 border-black">
+                        <i data-lucide="languages" class="w-7 h-7 text-black"></i>
+                    </div>
+                    <h3 class="text-xl font-black mb-3 text-black">MULTI-LANGUAGE</h3>
+                    <p class="text-gray-700 font-medium">Support for 20+ languages and dialects</p>
+                </div>
+
+                <div class="brutal-card bg-yellow p-8">
+                    <div class="w-14 h-14 rounded-none bg-white flex items-center justify-center mb-6 border-2 border-black">
+                        <i data-lucide="settings" class="w-7 h-7 text-black"></i>
+                    </div>
+                    <h3 class="text-xl font-black mb-3 text-black">CUSTOMIZABLE</h3>
+                    <p class="text-gray-700 font-medium">Adjust fonts, colors, and display preferences</p>
+                </div>
+
+                <div class="brutal-card bg-purple-400 p-8">
+                    <div class="w-14 h-14 rounded-none bg-white flex items-center justify-center mb-6 border-2 border-black">
+                        <i data-lucide="shield" class="w-7 h-7 text-black"></i>
+                    </div>
+                    <h3 class="text-xl font-black mb-3 text-black">PRIVACY FIRST</h3>
+                    <p class="text-gray-700 font-medium">Local processing, no data leaves your device</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download Section -->
+    <section id="download" class="py-20 px-8 bg-yellow border-y-4 border-black">
+        <div class="max-w-4xl mx-auto text-center">
+            <h2 class="text-4xl md:text-6xl font-black mb-6">
+                DOWNLOAD <span class="gradient-text">GLASSTUBE</span>
+            </h2>
+            <p class="text-xl font-bold mb-12 text-gray-800">CHOOSE YOUR PLATFORM AND START TRANSCRIBING FOR FREE</p>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- macOS -->
+                <div class="brutal-card bg-white p-8 cursor-pointer hover:bg-gray-100">
+                    <div class="w-16 h-16 mx-auto mb-4 bg-black flex items-center justify-center">
+                        <i data-lucide="apple" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-black mb-2 text-black">macOS</h3>
+                    <p class="text-gray-600 text-sm mb-4 font-bold">Apple Silicon & Intel</p>
+                    <span class="inline-block bg-green-400 border-2 border-black px-3 py-1 text-sm font-bold">v1.0.0 - FREE</span>
+                </div>
+
+                <!-- Windows -->
+                <div class="brutal-card bg-primary p-8 cursor-pointer hover:bg-primary-dark">
+                    <div class="w-16 h-16 mx-auto mb-4 bg-white flex items-center justify-center border-2 border-black">
+                        <i data-lucide="monitor" class="w-8 h-8 text-black"></i>
+                    </div>
+                    <h3 class="text-2xl font-black mb-2 text-black">Windows</h3>
+                    <p class="text-black/70 text-sm mb-4 font-bold">Windows 10 & 11</p>
+                    <span class="inline-block bg-yellow border-2 border-black px-3 py-1 text-sm font-bold">v1.0.0 - FREE</span>
+                </div>
+
+                <!-- Linux -->
+                <div class="brutal-card bg-orange-400 p-8 cursor-pointer hover:bg-orange-500">
+                    <div class="w-16 h-16 mx-auto mb-4 bg-black flex items-center justify-center">
+                        <i data-lucide="linux" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-black mb-2 text-black">Linux</h3>
+                    <p class="text-black/70 text-sm mb-4 font-bold">Debian, Ubuntu, Fedora</p>
+                    <span class="inline-block bg-cyan border-2 border-black px-3 py-1 text-sm font-bold">v1.0.0 - FREE</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section id="team" class="py-20 px-8">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-4xl md:text-6xl font-black text-center mb-16">
+                <span class="gradient-text">MEET THE TEAM</span>
+            </h2>
+
+            <div class="grid md:grid-cols-4 gap-6">
+                <div class="brutal-card bg-white p-6 text-center">
+                    <div class="w-24 h-24 mx-auto mb-4 bg-pink border-3 border-black flex items-center justify-center">
+                        <span class="text-3xl">👨‍💻</span>
+                    </div>
+                    <h3 class="text-lg font-black text-black">ALEX CHEN</h3>
+                    <p class="text-primary font-bold text-sm mb-3">LEAD DEVELOPER</p>
+                    <div class="flex justify-center gap-2">
+                        <a href="#" class="w-8 h-8 bg-black flex items-center justify-center hover:bg-gray-800 transition">
+                            <i data-lucide="github" class="w-4 h-4 text-white"></i>
+                        </a>
+                        <a href="#" class="w-8 h-8 bg-cyan border-2 border-black flex items-center justify-center hover:bg-cyan/80 transition">
+                            <i data-lucide="twitter" class="w-4 h-4 text-black"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="brutal-card bg-yellow p-6 text-center">
+                    <div class="w-24 h-24 mx-auto mb-4 bg-purple-400 border-3 border-black flex items-center justify-center">
+                        <span class="text-3xl">👩‍🎨</span>
+                    </div>
+                    <h3 class="text-lg font-black text-black">SARAH KIM</h3>
+                    <p class="text-primary font-bold text-sm mb-3">UI/UX DESIGNER</p>
+                    <div class="flex justify-center gap-2">
+                        <a href="#" class="w-8 h-8 bg-black flex items-center justify-center hover:bg-gray-800 transition">
+                            <i data-lucide="github" class="w-4 h-4 text-white"></i>
+                        </a>
+                        <a href="#" class="w-8 h-8 bg-white border-2 border-black flex items-center justify-center hover:bg-gray-100 transition">
+                            <i data-lucide="twitter" class="w-4 h-4 text-black"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="brutal-card bg-cyan p-6 text-center">
+                    <div class="w-24 h-24 mx-auto mb-4 bg-green-400 border-3 border-black flex items-center justify-center">
+                        <span class="text-3xl">🧑‍🔬</span>
+                    </div>
+                    <h3 class="text-lg font-black text-black">MIKE JOHNSON</h3>
+                    <p class="text-primary font-bold text-sm mb-3">ML ENGINEER</p>
+                    <div class="flex justify-center gap-2">
+                        <a href="#" class="w-8 h-8 bg-black flex items-center justify-center hover:bg-gray-800 transition">
+                            <i data-lucide="github" class="w-4 h-4 text-white"></i>
+                        </a>
+                        <a href="#" class="w-8 h-8 bg-white border-2 border-black flex items-center justify-center hover:bg-gray-100 transition">
+                            <i data-lucide="twitter" class="w-4 h-4 text-black"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="brutal-card bg-pink p-6 text-center">
+                    <div class="w-24 h-24 mx-auto mb-4 bg-yellow border-3 border-black flex items-center justify-center">
+                        <span class="text-3xl">👩‍💼</span>
+                    </div>
+                    <h3 class="text-lg font-black text-black">EMMA DAVIS</h3>
+                    <p class="text-primary font-bold text-sm mb-3">PRODUCT MANAGER</p>
+                    <div class="flex justify-center gap-2">
+                        <a href="#" class="w-8 h-8 bg-black flex items-center justify-center hover:bg-gray-800 transition">
+                            <i data-lucide="github" class="w-4 h-4 text-white"></i>
+                        </a>
+                        <a href="#" class="w-8 h-8 bg-white border-2 border-black flex items-center justify-center hover:bg-gray-100 transition">
+                            <i data-lucide="twitter" class="w-4 h-4 text-black"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feedback Section -->
+    <section id="feedback" class="py-20 px-8 bg-black text-white">
+        <div class="max-w-4xl mx-auto">
+            <div class="brutal-card bg-white p-12 text-center">
+                <div class="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-yellow to-pink flex items-center justify-center border-3 border-black shadow-brutal">
+                    <i data-lucide="message-square" class="w-10 h-10 text-black"></i>
+                </div>
+                <h2 class="text-3xl md:text-5xl font-black mb-4 text-black">WE'D LOVE YOUR FEEDBACK!</h2>
+                <p class="text-gray-700 mb-8 max-w-xl mx-auto font-bold">Help us improve GlassTube. Share your suggestions, report bugs, or just say hello.</p>
+
+                <div class="flex flex-wrap justify-center gap-4">
+                    <a href="#" class="brutal-button bg-primary px-6 py-3 text-white font-bold flex items-center gap-2">
+                        <i data-lucide="send" class="w-5 h-5"></i>
+                        SEND FEEDBACK
+                    </a>
+                    <a href="#" class="brutal-button bg-yellow px-6 py-3 text-black font-bold flex items-center gap-2">
+                        <i data-lucide="message-circle" class="w-5 h-5"></i>
+                        JOIN DISCORD
+                    </a>
+                </div>
+
+                <div class="mt-8 pt-8 border-t-4 border-black">
+                    <p class="text-gray-500 text-sm font-bold">CONTACT US AT</p>
+                    <a href="mailto:hello@glasstube.app" class="text-primary font-black text-xl hover:underline">HELLO@GLASSTUBE.APP</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-8 px-8 bg-white border-t-4 border-black">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-yellow border-2 border-black flex items-center justify-center shadow-brutal-sm">
+                    <i data-lucide="glasses" class="w-4 h-4 text-black"></i>
+                </div>
+                <span class="font-black text-black text-xl">GLASSTUBE</span>
+            </div>
+            <p class="text-gray-600 font-bold text-sm">© 2024 GLASSTUBE. ALL RIGHTS RESERVED.</p>
+            <div class="flex items-center gap-4">
+                <a href="#" class="w-10 h-10 bg-black flex items-center justify-center hover:bg-gray-800 transition">
+                    <i data-lucide="github" class="w-5 h-5 text-white"></i>
+                </a>
+                <a href="#" class="w-10 h-10 bg-cyan border-2 border-black flex items-center justify-center hover:bg-cyan/80 transition">
+                    <i data-lucide="twitter" class="w-5 h-5 text-black"></i>
+                </a>
+                <a href="#" class="w-10 h-10 bg-pink border-2 border-black flex items-center justify-center hover:bg-pink/80 transition">
+                    <i data-lucide="discord" class="w-5 h-5 text-black"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

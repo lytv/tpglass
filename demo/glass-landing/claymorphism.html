@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GlassTube - Live Transcript App | Claymorphism</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        outfit: ['Outfit', 'sans-serif'],
+                        work: ['Work Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#3B82F6',
+                        'primary-dark': '#2563EB',
+                        pastel: {
+                            pink: '#FDBCB4',
+                            blue: '#ADD8E6',
+                            green: '#98FF98',
+                            lavender: '#E6E6FA',
+                            yellow: '#FFF3B8',
+                            peach: '#FFDAB9',
+                        }
+                    },
+                    boxShadow: {
+                        'clay': '8px 8px 16px rgba(0,0,0,0.15), -8px -8px 16px rgba(255,255,255,0.8)',
+                        'clay-sm': '4px 4px 8px rgba(0,0,0,0.1), -4px -4px 8px rgba(255,255,255,0.6)',
+                        'clay-inner': 'inset 4px 4px 8px rgba(0,0,0,0.1), inset -4px -4px 8px rgba(255,255,255,0.6)',
+                        'clay-hover': '12px 12px 24px rgba(0,0,0,0.15), -12px -12px 24px rgba(255,255,255,0.9)',
+                    },
+                    borderRadius: {
+                        'clay': '24px',
+                        'clay-sm': '16px',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Outfit', sans-serif;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #EC4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .clay-card {
+            background: linear-gradient(145deg, #ffffff, #e8ecf1);
+            border-radius: 24px;
+            box-shadow: 8px 8px 16px rgba(0,0,0,0.1), -8px -8px 16px rgba(255,255,255,0.8);
+            transition: all 0.3s ease;
+        }
+        .clay-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 12px 12px 24px rgba(0,0,0,0.15), -12px -12px 24px rgba(255,255,255,0.9);
+        }
+        .clay-button {
+            background: linear-gradient(145deg, #3B82F6, #2563EB);
+            border-radius: 16px;
+            box-shadow: 4px 4px 8px rgba(0,0,0,0.2), -4px -4px 8px rgba(255,255,255,0.5), inset 2px 2px 4px rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+        }
+        .clay-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 6px 6px 12px rgba(0,0,0,0.25), -6px -6px 12px rgba(255,255,255,0.6), inset 2px 2px 4px rgba(255,255,255,0.3);
+        }
+        .clay-button-secondary {
+            background: linear-gradient(145deg, #ffffff, #e8ecf1);
+            border: 3px solid #3B82F6;
+            border-radius: 16px;
+            box-shadow: 4px 4px 8px rgba(0,0,0,0.1), -4px -4px 8px rgba(255,255,255,0.8);
+            transition: all 0.3s ease;
+        }
+        .clay-button-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 6px 6px 12px rgba(0,0,0,0.15), -6px -6px 12px rgba(255,255,255,0.9);
+        }
+        .bounce {
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .float {
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        .pulse-soft {
+            animation: pulse-soft 2s ease-in-out infinite;
+        }
+        @keyframes pulse-soft {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+        .hero-gradient {
+            background: linear-gradient(180deg, #ffffff 0%, #f0f4ff 50%, #e0e8ff 100%);
+        }
+    </style>
+</head>
+<body class="min-h-screen hero-gradient">
+    <!-- Navigation -->
+    <nav class="py-6 px-8">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 clay-card rounded-full flex items-center justify-center">
+                    <i data-lucide="glasses" class="w-6 h-6 text-primary"></i>
+                </div>
+                <span class="text-2xl font-bold font-outfit text-gray-800">GlassTube</span>
+            </div>
+            <div class="hidden md:flex items-center gap-6">
+                <a href="#how-it-works" class="font-medium text-gray-600 hover:text-primary transition">How It Works</a>
+                <a href="#download" class="font-medium text-gray-600 hover:text-primary transition">Download</a>
+                <a href="#team" class="font-medium text-gray-600 hover:text-primary transition">Team</a>
+                <a href="#feedback" class="font-medium text-gray-600 hover:text-primary transition">Feedback</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="py-16 px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-12">
+                <h1 class="text-5xl md:text-7xl font-extrabold mb-6">
+                    <span class="gradient-text">See Every Word</span><br>
+                    <span class="text-gray-800">In Real-Time</span>
+                </h1>
+                <p class="text-xl md:text-2xl text-gray-600 mb-8 max-w-2xl mx-auto">
+                    GlassTube captures live audio and displays transcripts instantly. Perfect for meetings, lectures, and accessibility.
+                </p>
+                <div class="flex flex-wrap justify-center gap-3 mb-8">
+                    <span class="clay-card px-4 py-2 text-sm font-semibold text-gray-700">👨‍💻 DEV</span>
+                    <span class="clay-card px-4 py-2 text-sm font-semibold text-gray-700">🎓 STUDENT</span>
+                    <span class="clay-card px-4 py-2 text-sm font-semibold text-gray-700">💬 COMMUNICATOR</span>
+                    <span class="clay-card px-4 py-2 text-sm font-semibold text-gray-700">📊 BRSE</span>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="#download" class="clay-button px-8 py-4 text-white font-semibold text-lg flex items-center justify-center gap-2">
+                        <i data-lucide="download" class="w-5 h-5"></i>
+                        Download Free
+                    </a>
+                    <a href="#how-it-works" class="clay-button-secondary px-8 py-4 text-primary font-semibold text-lg">
+                        Learn More
+                    </a>
+                </div>
+            </div>
+
+            <!-- Demo Video Placeholder -->
+            <div class="mt-16 max-w-4xl mx-auto">
+                <div class="clay-card p-2">
+                    <div class="clay-card-inner bg-gray-900 rounded-2xl aspect-video flex items-center justify-center relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-primary/20 to-purple-500/20"></div>
+                        <div class="text-center z-10">
+                            <div class="w-24 h-24 mx-auto mb-4 clay-card rounded-full flex items-center justify-center bounce">
+                                <i data-lucide="play" class="w-10 h-10 text-primary ml-1"></i>
+                            </div>
+                            <p class="text-white text-lg font-medium">Watch Demo</p>
+                        </div>
+                        <!-- Floating bubbles -->
+                        <div class="absolute top-10 left-10 w-16 h-16 pastel-pink rounded-full opacity-60 float" style="animation-delay: 0s;"></div>
+                        <div class="absolute bottom-10 right-10 w-12 h-12 pastel-blue rounded-full opacity-60 float" style="animation-delay: 0.5s;"></div>
+                        <div class="absolute top-20 right-20 w-8 h-8 pastel-green rounded-full opacity-60 float" style="animation-delay: 1s;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="py-20 px-8 bg-white/50">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-4xl md:text-5xl font-bold text-center mb-4">
+                <span class="gradient-text">How It Works</span>
+            </h2>
+            <p class="text-xl text-gray-600 text-center mb-16">Get started in 4 simple steps</p>
+
+            <div class="grid md:grid-cols-4 gap-8">
+                <!-- Step 1 -->
+                <div class="clay-card p-8 text-center group">
+                    <div class="w-16 h-16 mx-auto mb-6 rounded-full bg-pastel-pink flex items-center justify-center shadow-clay-sm group-hover:scale-110 transition-transform">
+                        <span class="text-3xl font-bold text-gray-700">1</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-gray-800">Listen</h3>
+                    <p class="text-gray-600">GlassTube captures audio from your microphone or system</p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="clay-card p-8 text-center group">
+                    <div class="w-16 h-16 mx-auto mb-6 rounded-full bg-pastel-blue flex items-center justify-center shadow-clay-sm group-hover:scale-110 transition-transform">
+                        <span class="text-3xl font-bold text-gray-700">2</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-gray-800">Transcribe</h3>
+                    <p class="text-gray-600">AI converts speech to text in real-time with high accuracy</p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="clay-card p-8 text-center group">
+                    <div class="w-16 h-16 mx-auto mb-6 rounded-full bg-pastel-green flex items-center justify-center shadow-clay-sm group-hover:scale-110 transition-transform">
+                        <span class="text-3xl font-bold text-gray-700">3</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-gray-800">Ask</h3>
+                    <p class="text-gray-600">Query your transcripts using natural language</p>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="clay-card p-8 text-center group">
+                    <div class="w-16 h-16 mx-auto mb-6 rounded-full bg-pastel-lavender flex items-center justify-center shadow-clay-sm group-hover:scale-110 transition-transform">
+                        <span class="text-3xl font-bold text-gray-700">4</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-gray-800">Record</h3>
+                    <p class="text-gray-600">Save transcripts and summaries for later reference</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section class="py-20 px-8">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-4xl md:text-5xl font-bold text-center mb-16">
+                <span class="gradient-text">Powerful Features</span>
+            </h2>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="clay-card p-8">
+                    <div class="w-14 h-14 rounded-full bg-pastel-yellow flex items-center justify-center mb-6">
+                        <i data-lucide="mic" class="w-7 h-7 text-gray-700"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-gray-800">Live Transcription</h3>
+                    <p class="text-gray-600">Real-time speech-to-text with minimal latency</p>
+                </div>
+
+                <div class="clay-card p-8">
+                    <div class="w-14 h-14 rounded-full bg-pastel-peach flex items-center justify-center mb-6">
+                        <i data-lucide="message-circle" class="w-7 h-7 text-gray-700"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-gray-800">Chat with Transcript</h3>
+                    <p class="text-gray-600">Ask questions about your transcripts using AI</p>
+                </div>
+
+                <div class="clay-card p-8">
+                    <div class="w-14 h-14 rounded-full bg-pastel-green flex items-center justify-center mb-6">
+                        <i data-lucide="file-text" class="w-7 h-7 text-gray-700"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-gray-800">Export & Save</h3>
+                    <p class="text-gray-600">Export transcripts as TXT, PDF, or Markdown</p>
+                </div>
+
+                <div class="clay-card p-8">
+                    <div class="w-14 h-14 rounded-full bg-pastel-blue flex items-center justify-center mb-6">
+                        <i data-lucide="languages" class="w-7 h-7 text-gray-700"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-gray-800">Multi-Language</h3>
+                    <p class="text-gray-600">Support for 20+ languages and dialects</p>
+                </div>
+
+                <div class="clay-card p-8">
+                    <div class="w-14 h-14 rounded-full bg-pastel-pink flex items-center justify-center mb-6">
+                        <i data-lucide="settings" class="w-7 h-7 text-gray-700"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-gray-800">Customizable</h3>
+                    <p class="text-gray-600">Adjust fonts, colors, and display preferences</p>
+                </div>
+
+                <div class="clay-card p-8">
+                    <div class="w-14 h-14 rounded-full bg-pastel-lavender flex items-center justify-center mb-6">
+                        <i data-lucide="shield" class="w-7 h-7 text-gray-700"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-gray-800">Privacy First</h3>
+                    <p class="text-gray-600">Local processing, no data leaves your device</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download Section -->
+    <section id="download" class="py-20 px-8 bg-white/50">
+        <div class="max-w-4xl mx-auto text-center">
+            <h2 class="text-4xl md:text-5xl font-bold mb-6">
+                <span class="gradient-text">Download GlassTube</span>
+            </h2>
+            <p class="text-xl text-gray-600 mb-12">Choose your platform and start transcribing for free</p>
+
+            <div class="grid md:grid-cols-3 gap-6">
+                <!-- macOS -->
+                <div class="clay-card p-8 hover:scale-105 transition-transform cursor-pointer">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-900 flex items-center justify-center">
+                        <i data-lucide="apple" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">macOS</h3>
+                    <p class="text-gray-500 text-sm mb-4">Apple Silicon & Intel</p>
+                    <span class="inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">v1.0.0 - Free</span>
+                </div>
+
+                <!-- Windows -->
+                <div class="clay-card p-8 hover:scale-105 transition-transform cursor-pointer">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-primary flex items-center justify-center">
+                        <i data-lucide="monitor" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Windows</h3>
+                    <p class="text-gray-500 text-sm mb-4">Windows 10 & 11</p>
+                    <span class="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">v1.0.0 - Free</span>
+                </div>
+
+                <!-- Linux -->
+                <div class="clay-card p-8 hover:scale-105 transition-transform cursor-pointer">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-orange-500 flex items-center justify-center">
+                        <i data-lucide="linux" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Linux</h3>
+                    <p class="text-gray-500 text-sm mb-4">Debian, Ubuntu, Fedora</p>
+                    <span class="inline-block bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium">v1.0.0 - Free</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section id="team" class="py-20 px-8">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-4xl md:text-5xl font-bold text-center mb-16">
+                <span class="gradient-text">Meet the Team</span>
+            </h2>
+
+            <div class="grid md:grid-cols-4 gap-8">
+                <div class="clay-card p-6 text-center">
+                    <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-pastel-pink to-pastel-peach flex items-center justify-center">
+                        <span class="text-3xl">👨‍💻</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800">Alex Chen</h3>
+                    <p class="text-primary text-sm font-medium">Lead Developer</p>
+                    <div class="flex justify-center gap-3 mt-4">
+                        <a href="#" class="w-8 h-8 clay-card rounded-full flex items-center justify-center hover:text-primary">
+                            <i data-lucide="github" class="w-4 h-4"></i>
+                        </a>
+                        <a href="#" class="w-8 h-8 clay-card rounded-full flex items-center justify-center hover:text-primary">
+                            <i data-lucide="twitter" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="clay-card p-6 text-center">
+                    <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-pastel-blue to-pastel-green flex items-center justify-center">
+                        <span class="text-3xl">👩‍🎨</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800">Sarah Kim</h3>
+                    <p class="text-primary text-sm font-medium">UI/UX Designer</p>
+                    <div class="flex justify-center gap-3 mt-4">
+                        <a href="#" class="w-8 h-8 clay-card rounded-full flex items-center justify-center hover:text-primary">
+                            <i data-lucide="github" class="w-4 h-4"></i>
+                        </a>
+                        <a href="#" class="w-8 h-8 clay-card rounded-full flex items-center justify-center hover:text-primary">
+                            <i data-lucide="twitter" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="clay-card p-6 text-center">
+                    <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-pastel-lavender to-pastel-yellow flex items-center justify-center">
+                        <span class="text-3xl">🧑‍🔬</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800">Mike Johnson</h3>
+                    <p class="text-primary text-sm font-medium">ML Engineer</p>
+                    <div class="flex justify-center gap-3 mt-4">
+                        <a href="#" class="w-8 h-8 clay-card rounded-full flex items-center justify-center hover:text-primary">
+                            <i data-lucide="github" class="w-4 h-4"></i>
+                        </a>
+                        <a href="#" class="w-8 h-8 clay-card rounded-full flex items-center justify-center hover:text-primary">
+                            <i data-lucide="twitter" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="clay-card p-6 text-center">
+                    <div class="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-pastel-green to-pastel-blue flex items-center justify-center">
+                        <span class="text-3xl">👩‍💼</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800">Emma Davis</h3>
+                    <p class="text-primary text-sm font-medium">Product Manager</p>
+                    <div class="flex justify-center gap-3 mt-4">
+                        <a href="#" class="w-8 h-8 clay-card rounded-full flex items-center justify-center hover:text-primary">
+                            <i data-lucide="github" class="w-4 h-4"></i>
+                        </a>
+                        <a href="#" class="w-8 h-8 clay-card rounded-full flex items-center justify-center hover:text-primary">
+                            <i data-lucide="twitter" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Feedback Section -->
+    <section id="feedback" class="py-20 px-8 bg-white/50">
+        <div class="max-w-4xl mx-auto">
+            <div class="clay-card p-12 text-center">
+                <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center">
+                    <i data-lucide="message-square" class="w-10 h-10 text-white"></i>
+                </div>
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 text-gray-800">We'd Love Your Feedback!</h2>
+                <p class="text-gray-600 mb-8 max-w-xl mx-auto">Help us improve GlassTube. Share your suggestions, report bugs, or just say hello.</p>
+
+                <div class="flex flex-wrap justify-center gap-4">
+                    <a href="#" class="clay-button px-6 py-3 text-white font-semibold flex items-center gap-2">
+                        <i data-lucide="send" class="w-5 h-5"></i>
+                        Send Feedback
+                    </a>
+                    <a href="#" class="clay-button-secondary px-6 py-3 text-primary font-semibold flex items-center gap-2">
+                        <i data-lucide="message-circle" class="w-5 h-5"></i>
+                        Join Discord
+                    </a>
+                </div>
+
+                <div class="mt-8 pt-8 border-t border-gray-200">
+                    <p class="text-gray-500 text-sm">Contact us at</p>
+                    <a href="mailto:hello@glasstube.app" class="text-primary font-semibold hover:underline">hello@glasstube.app</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-8 px-8 border-t border-gray-200">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 clay-card rounded-full flex items-center justify-center">
+                    <i data-lucide="glasses" class="w-4 h-4 text-primary"></i>
+                </div>
+                <span class="font-bold text-gray-800">GlassTube</span>
+            </div>
+            <p class="text-gray-500 text-sm">© 2024 GlassTube. All rights reserved.</p>
+            <div class="flex items-center gap-4">
+                <a href="#" class="text-gray-500 hover:text-primary transition"><i data-lucide="github" class="w-5 h-5"></i></a>
+                <a href="#" class="text-gray-500 hover:text-primary transition"><i data-lucide="twitter" class="w-5 h-5"></i></a>
+                <a href="#" class="text-gray-500 hover:text-primary transition"><i data-lucide="discord" class="w-5 h-5"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

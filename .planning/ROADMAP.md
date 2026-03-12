@@ -107,6 +107,16 @@
 
 *Roadmap updated: 2026-03-09*
 
+### Phase 05.3: Add Action Buttons to Transcript Detail Modal (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 5
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 05.3 to break down)
+
 ### Phase 05.2: Add Microphone Toggle Button to prevent acoustic leakage (INSERTED)
 
 **Goal:** Add a microphone toggle button on the Listen view UI to allow users to turn off microphone input to prevent acoustic leakage when they only want transcription from system audio.
