@@ -337,6 +337,13 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('summarize:summarize', { originalText, translatedText }),
   },
 
+  // Custom Prompt API
+  customPrompt: {
+    // Run custom prompt against transcript
+    run: (prompt, transcriptText) =>
+      ipcRenderer.invoke('custom-prompt:run', { prompt, transcriptText }),
+  },
+
   // STT Language API
   stt: {
     getLanguage: () => ipcRenderer.invoke('settings:getSttLanguage'),
