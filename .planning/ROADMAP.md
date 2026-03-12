@@ -104,10 +104,23 @@
 | 05.2 - Microphone Toggle Button | 1/1 | Complete    | 2026-03-09 |
 | 05.3 - Add Action Buttons to Transcript Modal | 2/2 | Complete    | 2026-03-12 |
 | 05.3.1 - Custom Prompts Settings | 2/2 | Complete    | 2026-03-12 |
+| 05.4 - Multi-Select Transcript Detail Display | 2/2 | In Progress | — |
 
 ---
 
 *Roadmap updated: 2026-03-12*
+
+### Phase 05.4: Multi-Select Transcript Detail Display (INSERTED)
+
+**Goal:** Allow users to select multiple transcripts from the transcript list and view them together in a modal. When multiple selected, actions (Summarize, Custom Prompt) combine all selected text into one input. Single-select behavior remains as existing.
+
+**Requirements**: None specified
+**Depends on:** Phase 5
+**Plans:** 2/2
+
+Plans:
+- [x] 05.4-01-PLAN.md — Checkbox selection UI with hover reveal, multi-panel modal with horizontal scroll
+- [x] 05.4-02-PLAN.md — Bulk actions with combined text, selection behavior
 
 ### Phase 05.3: Add Action Buttons to Transcript Detail Modal (INSERTED)
 
@@ -115,7 +128,7 @@
 
 **Requirements**: None specified
 **Depends on:** Phase 5
-**Plans:** 2/2 plans complete
+**Plans**: 2/2 plans complete
 
 Plans:
 - [x] 05.3-01-PLAN.md — Add 3 action buttons to modal, inline edit, summarize/custom-prompt modals
@@ -127,7 +140,7 @@ Plans:
 
 **Requirements**: None specified
 **Depends on:** Phase 5.3
-**Plans:** 2/2 plans complete
+**Plans**: 2/2 plans complete
 
 Plans:
 - [x] 05.3.1-01-PLAN.md — Backend service with runCustomPrompt method, IPC handler, preload bridge
@@ -138,7 +151,7 @@ Plans:
 **Goal:** Add a microphone toggle button on the Listen view UI to allow users to turn off microphone input to prevent acoustic leakage when they only want transcription from system audio.
 **Requirements**: None (urgent feature)
 **Depends on:** Phase 5
-**Plans:** 1/1 plans complete
+**Plans**: 1/1 plans complete
 
 Plans:
 - [x] 05.2-01-PLAN.md — Add mic toggle button with enableMic/disableMic functions
@@ -151,7 +164,7 @@ Plans:
 
 **Depends on:** Phase 5
 
-**Plans:** 1/1 plans complete
+**Plans**: 1/1 plans complete
 
 Plans:
 - [x] 05.1-01-PLAN.md — Add STT language configuration for Deepgram
