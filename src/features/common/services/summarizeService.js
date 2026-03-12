@@ -93,6 +93,52 @@ class SummarizeService {
     }
 
     /**
+     * Execute a custom prompt against transcript text
+     * @param {string} prompt - The custom prompt to execute
+     * @param {string} transcriptText - The transcript text to process
+     * @returns {Promise<{success: boolean, result: string, error: string|null}>}
+     */
+    async runCustomPrompt({ prompt, transcriptText }) {
+        if (!transcriptText || !transcriptText.trim()) {
+            return { success: false, error: 'No transcript text provided' };
+        }
+        if (!prompt || !prompt.trim()) {
+            return { success: false, error: 'No prompt provided' };
+        }
+
+        try {
+            // Get API key and model info
+            const modelInfo = await modelStateService.getCurrentModelInfo('llm');
+            if (!modelInfo || !modelInfo.apiKey) {
+                const error = 'API key not configured';
+                console.warn(`[SummarizeService] ${error}`);
+                return { success: false, error };
+            }
+
+            console.log(`[SummarizeService] Running custom prompt via ${modelInfo.provider} using ${modelInfo.model}`);
+
+            const llm = createLLM(modelInfo.provider, {
+                apiKey: modelInfo.apiKey,
+                model: modelInfo.model,
+                temperature: 0.5,
+                maxTokens: 2048,
+            });
+
+            const messages = [
+                { role: 'system', content: 'You are a helpful assistant that analyzes transcripts.' },
+                { role: 'user', content: `${prompt}\n\nTranscript:\n${transcriptText}` }
+            ];
+
+            const completion = await llm.chat(messages);
+            return { success: true, result: completion.content };
+
+        } catch (error) {
+            console.error(`[SummarizeService] Custom prompt error:`, error.message);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
      * Build the summary prompt
      * @param {string} originalText - Original transcript
      * @param {string} translatedText - Translated text
