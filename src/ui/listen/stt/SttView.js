@@ -350,6 +350,12 @@ export class SttView extends LitElement {
         _summaryContent: { type: Object, state: true },
         _showSummaryModal: { type: Boolean, state: true },
         _showCustomPromptModal: { type: Boolean, state: true },
+        // Custom Prompt modal state
+        customPromptPresets: { type: Array, state: true },
+        selectedPromptId: { type: String, state: true },
+        customPromptResult: { type: String, state: true },
+        customPromptLoading: { type: Boolean, state: true },
+        customPromptError: { type: String, state: true },
     };
 
     constructor() {
@@ -373,6 +379,12 @@ export class SttView extends LitElement {
         this._summaryContent = null;
         this._showSummaryModal = false;
         this._showCustomPromptModal = false;
+        // Custom Prompt modal initialization
+        this.customPromptPresets = [];
+        this.selectedPromptId = '';
+        this.customPromptResult = '';
+        this.customPromptLoading = false;
+        this.customPromptError = '';
 
         this.handleSttUpdate = this.handleSttUpdate.bind(this);
     }
@@ -621,8 +633,74 @@ export class SttView extends LitElement {
         this._isSummarizing = false;
     }
 
-    _handleCustomPrompt() {
+    async _handleCustomPrompt() {
         this._showCustomPromptModal = true;
+        this.customPromptResult = '';
+        this.customPromptError = '';
+        this.selectedPromptId = '';
+        // Load presets
+        await this._loadCustomPromptPresets();
+    }
+
+    async _loadCustomPromptPresets() {
+        try {
+            if (window.api && window.api.settingsView) {
+                const presets = await window.api.settingsView.getPresets();
+                // Filter to show only custom prompts (is_default === 0)
+                this.customPromptPresets = presets ? presets.filter(p => p.is_default === 0) : [];
+                this.requestUpdate();
+            }
+        } catch (error) {
+            console.error('[SttView] Error loading custom prompt presets:', error);
+            this.customPromptPresets = [];
+        }
+    }
+
+    getPromptById(id) {
+        return this.customPromptPresets.find(p => p.id === id);
+    }
+
+    async _handleRunCustomPrompt() {
+        if (!this.selectedPromptId || !this.expandedTranslation) return;
+
+        const prompt = this.getPromptById(this.selectedPromptId);
+        if (!prompt) return;
+
+        this.customPromptLoading = true;
+        this.customPromptError = '';
+        this.customPromptResult = '';
+        this.requestUpdate();
+
+        try {
+            const transcriptText = this.expandedTranslation.text;
+
+            if (window.api && window.api.customPrompt) {
+                // Replace {text} placeholder with actual transcript text
+                const promptText = prompt.prompt.replace(/\{text\}/gi, transcriptText);
+                const result = await window.api.customPrompt.run(promptText, transcriptText);
+
+                if (result && result.success) {
+                    this.customPromptResult = result.result || 'No result returned';
+                } else {
+                    this.customPromptError = result?.error || 'Failed to run prompt';
+                }
+            } else {
+                this.customPromptError = 'Custom prompt API not available';
+            }
+        } catch (error) {
+            console.error('[SttView] Error running custom prompt:', error);
+            this.customPromptError = error.message || 'Error running prompt';
+        }
+
+        this.customPromptLoading = false;
+        this.requestUpdate();
+    }
+
+    _handleSelectPrompt(e) {
+        this.selectedPromptId = e.target.value;
+        this.customPromptResult = '';
+        this.customPromptError = '';
+        this.requestUpdate();
     }
 
     _closeSummaryModal() {
@@ -632,6 +710,10 @@ export class SttView extends LitElement {
 
     _closeCustomPromptModal() {
         this._showCustomPromptModal = false;
+        this.customPromptPresets = [];
+        this.selectedPromptId = '';
+        this.customPromptResult = '';
+        this.customPromptError = '';
     }
 
     getTranscriptText() {
@@ -851,12 +933,63 @@ export class SttView extends LitElement {
                             <button class="modal-close-btn" @click="${() => this._closeCustomPromptModal()}">✕</button>
                         </div>
                         <div class="modal-content">
-                            <div class="placeholder-message">
-                                <p>Configure prompts in Settings to enable custom AI prompts.</p>
-                                <p style="margin-top: 12px; font-size: 12px; color: rgba(255,255,255,0.4);">
-                                    (This feature will be available in a future phase)
-                                </p>
-                            </div>
+                            ${this.customPromptPresets.length === 0 ? html`
+                                <div class="placeholder-message">
+                                    <p>No custom prompts configured.</p>
+                                    <p style="margin-top: 12px; font-size: 12px; color: rgba(255,255,255,0.4);">
+                                        Create prompts in Settings to enable custom AI prompts.
+                                    </p>
+                                </div>
+                            ` : html`
+                                <div class="summary-section">
+                                    <h3>Select Prompt</h3>
+                                    <select
+                                        style="width: 100%; padding: 8px; background: #2a2a2a; border: 1px solid #444; border-radius: 6px; color: white; font-size: 13px; margin-bottom: 12px;"
+                                        .value=${this.selectedPromptId}
+                                        @change=${this._handleSelectPrompt}
+                                    >
+                                        <option value="">-- Select a prompt --</option>
+                                        ${this.customPromptPresets.map(prompt => html`
+                                            <option value=${prompt.id}>${prompt.title}</option>
+                                        `)}
+                                    </select>
+
+                                    ${this.selectedPromptId ? html`
+                                        ${this.getPromptById(this.selectedPromptId) ? html`
+                                            <div style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; margin-bottom: 12px; font-size: 12px; color: rgba(255,255,255,0.7);">
+                                                <strong>Prompt:</strong> ${this.getPromptById(this.selectedPromptId).prompt}
+                                            </div>
+                                        ` : ''}
+
+                                        <button
+                                            class="settings-button"
+                                            style="background: #ffc107; color: #1e1e1e; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500;"
+                                            @click=${this._handleRunCustomPrompt}
+                                            ?disabled=${this.customPromptLoading}
+                                        >
+                                            ${this.customPromptLoading ? 'Running...' : 'Run Prompt'}
+                                        </button>
+                                    ` : ''}
+                                </div>
+
+                                ${this.customPromptLoading ? html`
+                                    <div class="summary-loading">Processing...</div>
+                                ` : ''}
+
+                                ${this.customPromptError ? html`
+                                    <div class="summary-section" style="color: rgba(255, 59, 48, 0.9);">
+                                        <h3>Error</h3>
+                                        <p>${this.customPromptError}</p>
+                                    </div>
+                                ` : ''}
+
+                                ${this.customPromptResult ? html`
+                                    <div class="summary-section">
+                                        <h3>Result</h3>
+                                        <p style="white-space: pre-wrap;">${this.customPromptResult}</p>
+                                    </div>
+                                ` : ''}
+                            `}
                         </div>
                     </div>
                 </div>

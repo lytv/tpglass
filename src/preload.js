@@ -239,6 +239,9 @@ contextBridge.exposeInMainWorld('api', {
     
     // Settings Management
     getPresets: () => ipcRenderer.invoke('settings:getPresets'),
+    createPreset: (title, prompt) => ipcRenderer.invoke('settings:createPreset', { title, prompt }),
+    updatePreset: (id, title, prompt) => ipcRenderer.invoke('settings:updatePreset', { id, title, prompt }),
+    deletePreset: (id) => ipcRenderer.invoke('settings:deletePreset', { id }),
     getAutoUpdate: () => ipcRenderer.invoke('settings:get-auto-update'),
     setAutoUpdate: (isEnabled) => ipcRenderer.invoke('settings:set-auto-update', isEnabled),
     // Translation Settings

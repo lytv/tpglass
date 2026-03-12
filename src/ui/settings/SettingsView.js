@@ -505,6 +505,209 @@ export class SettingsView extends LitElement {
             margin-right: 6px;
         }
 
+        /* Custom Prompts Section */
+        .prompt-section {
+            padding: 6px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .prompt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .prompt-title {
+            font-size: 11px;
+            font-weight: 500;
+            color: white;
+        }
+
+        .prompt-toggle {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 2px;
+            transition: background-color 0.15s ease;
+        }
+
+        .prompt-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .prompt-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .prompt-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-size: 11px;
+            border: 1px solid transparent;
+        }
+
+        .prompt-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .prompt-name {
+            color: white;
+            flex: 1;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+            font-weight: 300;
+        }
+
+        .prompt-actions {
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        .prompt-item:hover .prompt-actions {
+            opacity: 1;
+        }
+
+        .prompt-action-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 10px;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 2px;
+            transition: all 0.15s ease;
+        }
+
+        .prompt-action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .prompt-action-btn.delete:hover {
+            background: rgba(255, 59, 48, 0.2);
+            color: rgba(255, 59, 48, 0.9);
+        }
+
+        .prompt-form {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            margin-top: 8px;
+        }
+
+        .prompt-form input,
+        .prompt-form textarea {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            color: white;
+            font-size: 11px;
+            padding: 6px 8px;
+            font-family: inherit;
+        }
+
+        .prompt-form input::placeholder,
+        .prompt-form textarea::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .prompt-form input:focus,
+        .prompt-form textarea:focus {
+            outline: none;
+            border-color: rgba(0, 122, 255, 0.6);
+        }
+
+        .prompt-form textarea {
+            min-height: 60px;
+            resize: vertical;
+        }
+
+        .prompt-form-actions {
+            display: flex;
+            gap: 4px;
+            justify-content: flex-end;
+        }
+
+        .prompt-form-actions button {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s ease;
+        }
+
+        .prompt-form-actions .save-btn {
+            background: rgba(0, 122, 255, 0.8);
+            color: white;
+        }
+
+        .prompt-form-actions .save-btn:hover {
+            background: rgba(0, 122, 255, 1);
+        }
+
+        .prompt-form-actions .cancel-btn {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .prompt-form-actions .cancel-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .add-prompt-btn {
+            background: transparent;
+            border: 1px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 11px;
+            padding: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            margin-top: 4px;
+        }
+
+        .add-prompt-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+        }
+
+        .default-prompt-badge {
+            font-size: 9px;
+            color: rgba(0, 122, 255, 0.8);
+            margin-left: 4px;
+        }
+
+        .no-prompts-message {
+            padding: 12px 8px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 10px;
+            line-height: 1.4;
+        }
+
         .hidden {
             display: none;
         }
@@ -635,6 +838,11 @@ export class SettingsView extends LitElement {
         presets: { type: Array, state: true },
         selectedPreset: { type: Object, state: true },
         showPresets: { type: Boolean, state: true },
+        // Custom Prompts properties
+        showCustomPrompts: { type: Boolean, state: true },
+        customPrompts: { type: Array, state: true },
+        editingPrompt: { type: Object, state: true },
+        isCreatingPrompt: { type: Boolean, state: true },
         autoUpdateEnabled: { type: Boolean, state: true },
         autoUpdateLoading: { type: Boolean, state: true },
         // Ollama related properties
@@ -670,6 +878,11 @@ export class SettingsView extends LitElement {
         this.presets = [];
         this.selectedPreset = null;
         this.showPresets = false;
+        // Custom Prompts initialization
+        this.showCustomPrompts = false;
+        this.customPrompts = [];
+        this.editingPrompt = null;
+        this.isCreatingPrompt = false;
         // Ollama related
         this.ollamaStatus = { installed: false, running: false };
         this.ollamaModels = [];
@@ -1461,6 +1674,77 @@ export class SettingsView extends LitElement {
         this.showPresets = !this.showPresets;
     }
 
+    // Custom Prompts methods
+    toggleCustomPrompts() {
+        this.showCustomPrompts = !this.showCustomPrompts;
+        if (this.showCustomPrompts) {
+            // Filter custom prompts from presets
+            this.customPrompts = this.presets.filter(p => p.is_default === 0);
+        }
+    }
+
+    async handleCreatePrompt() {
+        this.isCreatingPrompt = true;
+        this.editingPrompt = { title: '', prompt: '' };
+    }
+
+    async handleEditPrompt(prompt) {
+        this.editingPrompt = { ...prompt };
+        this.isCreatingPrompt = false;
+    }
+
+    async handleSavePrompt() {
+        if (!this.editingPrompt || !this.editingPrompt.title || !this.editingPrompt.prompt) {
+            alert('Please enter both title and prompt content');
+            return;
+        }
+
+        try {
+            if (this.isCreatingPrompt) {
+                // Create new prompt
+                await window.api.settingsView.createPreset(this.editingPrompt.title, this.editingPrompt.prompt);
+            } else {
+                // Update existing prompt
+                await window.api.settingsView.updatePreset(
+                    this.editingPrompt.id,
+                    this.editingPrompt.title,
+                    this.editingPrompt.prompt
+                );
+            }
+            // Refresh presets
+            const presets = await window.api.settingsView.getPresets();
+            this.presets = presets || [];
+            this.customPrompts = this.presets.filter(p => p.is_default === 0);
+            this.editingPrompt = null;
+            this.isCreatingPrompt = false;
+        } catch (error) {
+            console.error('Error saving prompt:', error);
+            alert('Failed to save prompt: ' + error.message);
+        }
+    }
+
+    async handleDeletePrompt(prompt) {
+        if (!confirm(`Are you sure you want to delete "${prompt.title}"?`)) {
+            return;
+        }
+
+        try {
+            await window.api.settingsView.deletePreset(prompt.id);
+            // Refresh presets
+            const presets = await window.api.settingsView.getPresets();
+            this.presets = presets || [];
+            this.customPrompts = this.presets.filter(p => p.is_default === 0);
+        } catch (error) {
+            console.error('Error deleting prompt:', error);
+            alert('Failed to delete prompt: ' + error.message);
+        }
+    }
+
+    handleCancelEditPrompt() {
+        this.editingPrompt = null;
+        this.isCreatingPrompt = false;
+    }
+
     async handlePresetSelect(preset) {
         this.selectedPreset = preset;
         // Here you could implement preset application logic
@@ -1786,6 +2070,66 @@ export class SettingsView extends LitElement {
                                 ${this.selectedPreset?.id === preset.id ? html`<span class="preset-status">Selected</span>` : ''}
                             </div>
                         `)}
+                    </div>
+                </div>
+
+                <!-- Custom Prompts Section -->
+                <div class="prompt-section">
+                    <div class="prompt-header">
+                        <span class="prompt-title">
+                            Custom Prompts
+                            <span class="preset-count">(${this.customPrompts.length})</span>
+                        </span>
+                        <span class="prompt-toggle" @click=${this.toggleCustomPrompts}>
+                            ${this.showCustomPrompts ? '▼' : '▶'}
+                        </span>
+                    </div>
+
+                    <div class="prompt-list ${this.showCustomPrompts ? '' : 'hidden'}">
+                        ${!this.editingPrompt && this.customPrompts.length === 0 ? html`
+                            <div class="no-prompts-message">
+                                No custom prompts yet.<br>
+                                Click "Add Custom Prompt" to create one.
+                            </div>
+                        ` : ''}
+
+                        ${!this.editingPrompt ? this.customPrompts.map(prompt => html`
+                            <div class="prompt-item">
+                                <span class="prompt-name">${prompt.title}</span>
+                                <div class="prompt-actions">
+                                    <button class="prompt-action-btn" @click=${() => this.handleEditPrompt(prompt)} title="Edit">Edit</button>
+                                    <button class="prompt-action-btn delete" @click=${() => this.handleDeletePrompt(prompt)} title="Delete">Delete</button>
+                                </div>
+                            </div>
+                        `) : ''}
+
+                        ${this.editingPrompt ? html`
+                            <div class="prompt-form">
+                                <input
+                                    type="text"
+                                    placeholder="Prompt title"
+                                    .value=${this.editingPrompt.title || ''}
+                                    @input=${(e) => this.editingPrompt = { ...this.editingPrompt, title: e.target.value }}
+                                >
+                                <textarea
+                                    placeholder="Prompt content (e.g., 'Summarize this: {text}')"
+                                    .value=${this.editingPrompt.prompt || ''}
+                                    @input=${(e) => this.editingPrompt = { ...this.editingPrompt, prompt: e.target.value }}
+                                ></textarea>
+                                <div class="prompt-form-actions">
+                                    <button class="cancel-btn" @click=${this.handleCancelEditPrompt}>Cancel</button>
+                                    <button class="save-btn" @click=${this.handleSavePrompt}>
+                                        ${this.isCreatingPrompt ? 'Create' : 'Save'}
+                                    </button>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${!this.editingPrompt ? html`
+                            <button class="add-prompt-btn" @click=${this.handleCreatePrompt}>
+                                + Add Custom Prompt
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
 
