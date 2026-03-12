@@ -177,6 +177,162 @@ export class SttView extends LitElement {
             color: #ffc107;
             font-weight: 500;
         }
+
+        /* Action buttons in modal header */
+        .action-buttons {
+            display: flex;
+            gap: 4px;
+            margin-right: 8px;
+        }
+
+        .action-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        /* Edit mode */
+        .edit-textarea {
+            width: 100%;
+            min-height: 100px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            padding: 12px;
+            font-family: inherit;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        .edit-textarea:focus {
+            outline: none;
+            border-color: #ffc107;
+        }
+
+        .edit-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            justify-content: flex-end;
+        }
+
+        .edit-controls button {
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .edit-controls .save-btn {
+            background: #ffc107;
+            color: #1e1e1e;
+        }
+
+        .edit-controls .save-btn:hover {
+            background: #ffcd38;
+        }
+
+        .edit-controls .cancel-btn {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .edit-controls .cancel-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        /* Summary/Custom Prompt modal */
+        .summary-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1100;
+        }
+
+        .summary-modal {
+            background: #1e1e1e;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 600px;
+            max-height: 80%;
+            overflow: auto;
+            width: 90%;
+        }
+
+        .summary-section {
+            margin-bottom: 16px;
+        }
+
+        .summary-section h3 {
+            font-size: 14px;
+            color: #ffc107;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .summary-section p, .summary-section ul {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+        }
+
+        .summary-section ul {
+            padding-left: 20px;
+        }
+
+        .summary-section li {
+            margin-bottom: 4px;
+        }
+
+        .summary-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+        }
+
+        .placeholder-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+        }
+
+        .modal-close-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .modal-close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
     `;
 
     static properties = {
@@ -187,6 +343,13 @@ export class SttView extends LitElement {
         translationSettingsLoaded: { type: Boolean },
         translations: { type: Object, state: true },
         expandedTranslation: { type: Object, state: true },
+        // Action button states
+        _isEditing: { type: Boolean, state: true },
+        _editText: { type: String, state: true },
+        _isSummarizing: { type: Boolean, state: true },
+        _summaryContent: { type: Object, state: true },
+        _showSummaryModal: { type: Boolean, state: true },
+        _showCustomPromptModal: { type: Boolean, state: true },
     };
 
     constructor() {
@@ -202,6 +365,14 @@ export class SttView extends LitElement {
         this._shouldScrollAfterUpdate = false;
         this._translationCache = new Map();
         this._pendingTranslations = new Set();
+
+        // Action button states
+        this._isEditing = false;
+        this._editText = '';
+        this._isSummarizing = false;
+        this._summaryContent = null;
+        this._showSummaryModal = false;
+        this._showCustomPromptModal = false;
 
         this.handleSttUpdate = this.handleSttUpdate.bind(this);
     }
@@ -370,6 +541,97 @@ export class SttView extends LitElement {
 
     _handleTranslationClick(msg) {
         this.expandedTranslation = msg;
+        // Reset action states when modal closes
+        this._isEditing = false;
+        this._editText = '';
+        this._summaryContent = null;
+        this._showSummaryModal = false;
+        this._showCustomPromptModal = false;
+    }
+
+    // Action button handlers
+    _handleEdit() {
+        this._isEditing = true;
+        this._editText = this.expandedTranslation ? this.expandedTranslation.text : '';
+    }
+
+    _handleSaveEdit() {
+        if (this.expandedTranslation) {
+            // Update the message text in sttMessages array
+            const messageId = this.expandedTranslation.id;
+            const newMessages = this.sttMessages.map(msg => {
+                if (msg.id === messageId) {
+                    return { ...msg, text: this._editText };
+                }
+                return msg;
+            });
+            this.sttMessages = newMessages;
+
+            // Update expanded translation to reflect changes
+            this.expandedTranslation = { ...this.expandedTranslation, text: this._editText };
+
+            // Dispatch event to notify parent
+            this.dispatchEvent(new CustomEvent('stt-messages-updated', {
+                detail: { messages: this.sttMessages },
+                bubbles: true
+            }));
+        }
+        this._isEditing = false;
+    }
+
+    _handleCancelEdit() {
+        this._editText = this.expandedTranslation ? this.expandedTranslation.text : '';
+        this._isEditing = false;
+    }
+
+    async _handleSummarize() {
+        if (!this.expandedTranslation) return;
+
+        this._isSummarizing = true;
+        this._showSummaryModal = true;
+
+        try {
+            const originalText = this.expandedTranslation.text;
+            const translatedText = this.translations[this.expandedTranslation.id] || '';
+
+            // Get both original and translated text
+            const combinedText = `${originalText}\n\nTranslation: ${translatedText}`;
+
+            // Call summarize API via IPC
+            if (window.api && window.api.summarize) {
+                const result = await window.api.summarize.summarize(combinedText);
+                this._summaryContent = result;
+            } else {
+                // Fallback placeholder if API not available
+                this._summaryContent = {
+                    tldr: 'Summary feature requires backend API integration.',
+                    bulletPoints: ['API endpoint not configured'],
+                    actionItems: ['Configure summarize API in backend']
+                };
+            }
+        } catch (error) {
+            console.error('[SttView] Summarize error:', error);
+            this._summaryContent = {
+                tldr: 'Error generating summary',
+                bulletPoints: [error.message],
+                actionItems: []
+            };
+        }
+
+        this._isSummarizing = false;
+    }
+
+    _handleCustomPrompt() {
+        this._showCustomPromptModal = true;
+    }
+
+    _closeSummaryModal() {
+        this._showSummaryModal = false;
+        this._summaryContent = null;
+    }
+
+    _closeCustomPromptModal() {
+        this._showCustomPromptModal = false;
     }
 
     getTranscriptText() {
@@ -521,12 +783,80 @@ export class SttView extends LitElement {
                 <div class="translation-modal-overlay" @click="${() => this.expandedTranslation = null}">
                     <div class="translation-modal" @click="${(e) => e.stopPropagation()}">
                         <div class="modal-header">
-                            <span>Translation</span>
+                            <div class="action-buttons">
+                                <button class="action-btn" @click="${() => this._handleEdit()}" title="Edit Transcript">✏️</button>
+                                <button class="action-btn" @click="${() => this._handleSummarize()}" title="Summarize">📝</button>
+                                <button class="action-btn" @click="${() => this._handleCustomPrompt()}" title="Custom Prompt">⚡</button>
+                            </div>
                             <button @click="${() => this.expandedTranslation = null}">✕</button>
                         </div>
                         <div class="modal-content">
-                            <p class="original">${this.expandedTranslation.text}</p>
-                            <p class="translated">${this.translations[this.expandedTranslation.id]}</p>
+                            ${this._isEditing ? html`
+                                <textarea
+                                    class="edit-textarea"
+                                    .value="${this._editText}"
+                                    @input="${(e) => this._editText = e.target.value}"
+                                ></textarea>
+                                <div class="edit-controls">
+                                    <button class="cancel-btn" @click="${() => this._handleCancelEdit()}">Cancel</button>
+                                    <button class="save-btn" @click="${() => this._handleSaveEdit()}">Save</button>
+                                </div>
+                            ` : html`
+                                <p class="original">${this.expandedTranslation.text}</p>
+                                <p class="translated">${this.translations[this.expandedTranslation.id]}</p>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            ` : ''}
+            ${this._showSummaryModal ? html`
+                <div class="summary-modal-overlay" @click="${() => this._closeSummaryModal()}">
+                    <div class="summary-modal" @click="${(e) => e.stopPropagation()}">
+                        <div class="modal-header">
+                            <span>Summary</span>
+                            <button class="modal-close-btn" @click="${() => this._closeSummaryModal()}">✕</button>
+                        </div>
+                        <div class="modal-content">
+                            ${this._isSummarizing ? html`
+                                <div class="summary-loading">Generating summary...</div>
+                            ` : this._summaryContent ? html`
+                                <div class="summary-section">
+                                    <h3>TL;DR</h3>
+                                    <p>${this._summaryContent.tldr}</p>
+                                </div>
+                                <div class="summary-section">
+                                    <h3>Key Points</h3>
+                                    <ul>
+                                        ${this._summaryContent.bulletPoints.map(point => html`<li>${point}</li>`)}
+                                    </ul>
+                                </div>
+                                ${this._summaryContent.actionItems && this._summaryContent.actionItems.length > 0 ? html`
+                                    <div class="summary-section">
+                                        <h3>Action Items</h3>
+                                        <ul>
+                                            ${this._summaryContent.actionItems.map(item => html`<li>${item}</li>`)}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            ` : ''}
+            ${this._showCustomPromptModal ? html`
+                <div class="summary-modal-overlay" @click="${() => this._closeCustomPromptModal()}">
+                    <div class="summary-modal" @click="${(e) => e.stopPropagation()}">
+                        <div class="modal-header">
+                            <span>Custom Prompt</span>
+                            <button class="modal-close-btn" @click="${() => this._closeCustomPromptModal()}">✕</button>
+                        </div>
+                        <div class="modal-content">
+                            <div class="placeholder-message">
+                                <p>Configure prompts in Settings to enable custom AI prompts.</p>
+                                <p style="margin-top: 12px; font-size: 12px; color: rgba(255,255,255,0.4);">
+                                    (This feature will be available in a future phase)
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
