@@ -362,8 +362,21 @@ export class SttView extends LitElement {
         }
 
         .transcription-container:hover .checkbox-wrapper,
-        .transcription-container.is-hovering .checkbox-wrapper {
+        .transcription-container.is-hovering .checkbox-wrapper,
+        .transcription-container.is-selection-mode .checkbox-wrapper {
             opacity: 1;
+        }
+
+        /* Keyboard focus indicator */
+        .message-wrapper.keyboard-focused {
+            outline: 2px solid #ffc107;
+            outline-offset: -2px;
+            border-radius: 4px;
+        }
+
+        /* Selection mode styling */
+        .transcription-container.is-selection-mode {
+            outline: none;
         }
 
         .transcript-header {
@@ -510,6 +523,10 @@ export class SttView extends LitElement {
         selectedTranscriptIds: { type: Array, state: true },
         isHoveringList: { type: Boolean, state: true },
         multiSelectModalOpen: { type: Boolean, state: true },
+        // Keyboard navigation state
+        isSelectionMode: { type: Boolean, state: true },
+        keyboardFocusedIndex: { type: Number, state: true },
+        selectionAnchor: { type: Number, state: true },
     };
 
     constructor() {
@@ -544,6 +561,11 @@ export class SttView extends LitElement {
         this.selectedTranscriptIds = [];
         this.isHoveringList = false;
         this.multiSelectModalOpen = false;
+
+        // Keyboard navigation state initialization
+        this.isSelectionMode = false;
+        this.keyboardFocusedIndex = -1;
+        this.selectionAnchor = -1;
 
         this.handleSttUpdate = this.handleSttUpdate.bind(this);
     }
@@ -748,6 +770,134 @@ export class SttView extends LitElement {
             isAllSelected: this.selectedTranscriptIds.length === finalIds.length && finalIds.length > 0,
             hasMessages: this.sttMessages.length > 0
         };
+    }
+
+    // Keyboard navigation handler
+    _handleKeyboardNavigation(e) {
+        const finalMessages = this._getFinalMessageIds();
+        const messageCount = finalMessages.length;
+        if (messageCount === 0) return;
+
+        switch (e.key) {
+            case ' ':
+                // Space: Toggle selection mode on/off
+                e.preventDefault();
+                if (this.isSelectionMode) {
+                    // Exit selection mode, keep selection
+                    this.isSelectionMode = false;
+                    this.keyboardFocusedIndex = -1;
+                } else {
+                    // Enter selection mode
+                    this.isSelectionMode = true;
+                    this.keyboardFocusedIndex = 0;
+                    this.selectionAnchor = 0;
+                }
+                break;
+
+            case 'Escape':
+                // Escape: Exit selection mode (keep selection), second press clears
+                e.preventDefault();
+                if (this.isSelectionMode) {
+                    if (this.keyboardFocusedIndex === -1) {
+                        // Already exited once, now clear selection
+                        this.selectedTranscriptIds = [];
+                        this.selectionAnchor = -1;
+                    }
+                    this.isSelectionMode = false;
+                    this.keyboardFocusedIndex = -1;
+                } else if (this.selectedTranscriptIds.length > 0) {
+                    // Clear selection when not in selection mode
+                    this.selectedTranscriptIds = [];
+                    this.selectionAnchor = -1;
+                }
+                break;
+
+            case 'ArrowUp':
+                // ArrowUp: Move focus up one row
+                e.preventDefault();
+                if (this.isSelectionMode && this.keyboardFocusedIndex > 0) {
+                    if (e.shiftKey) {
+                        // Shift+ArrowUp: Range selection upward
+                        this._handleRangeSelection(this.keyboardFocusedIndex - 1);
+                    } else {
+                        this.keyboardFocusedIndex--;
+                    }
+                } else if (!this.isSelectionMode && this.keyboardFocusedIndex > 0) {
+                    this.keyboardFocusedIndex--;
+                }
+                break;
+
+            case 'ArrowDown':
+                // ArrowDown: Move focus down one row
+                e.preventDefault();
+                if (this.isSelectionMode && this.keyboardFocusedIndex < messageCount - 1) {
+                    if (e.shiftKey) {
+                        // Shift+ArrowDown: Range selection downward
+                        this._handleRangeSelection(this.keyboardFocusedIndex + 1);
+                    } else {
+                        this.keyboardFocusedIndex++;
+                    }
+                } else if (!this.isSelectionMode && this.keyboardFocusedIndex < messageCount - 1) {
+                    this.keyboardFocusedIndex++;
+                }
+                break;
+
+            case 'Enter':
+                // Enter: Toggle checkbox selection for focused row
+                if (this.isSelectionMode && this.keyboardFocusedIndex >= 0) {
+                    e.preventDefault();
+                    const msgId = finalMessages[this.keyboardFocusedIndex];
+                    this._toggleSelection(msgId);
+                    this.selectionAnchor = this.keyboardFocusedIndex;
+                }
+                break;
+
+            default:
+                // For any other key when in selection mode, exit selection mode
+                if (this.isSelectionMode && e.key.length === 1) {
+                    // Single character key press - could be used for search in future
+                }
+                break;
+        }
+        this.requestUpdate();
+    }
+
+    // Handle range selection between anchor and target position
+    _handleRangeSelection(targetIndex) {
+        const finalMessages = this._getFinalMessageIds();
+        if (this.selectionAnchor < 0 || targetIndex < 0 || targetIndex >= finalMessages.length) return;
+
+        const start = Math.min(this.selectionAnchor, targetIndex);
+        const end = Math.max(this.selectionAnchor, targetIndex);
+
+        // Determine if we should select or deselect based on the current state of anchor
+        const anchorMsgId = finalMessages[this.selectionAnchor];
+        const anchorIsSelected = this.selectedTranscriptIds.includes(anchorMsgId);
+
+        // Get all message IDs in range
+        const rangeIds = finalMessages.slice(start, end + 1);
+
+        // Update selection
+        const currentIds = [...this.selectedTranscriptIds];
+        if (anchorIsSelected) {
+            // Select all in range
+            rangeIds.forEach(id => {
+                if (!currentIds.includes(id)) {
+                    currentIds.push(id);
+                }
+            });
+        } else {
+            // Deselect all in range
+            rangeIds.forEach(id => {
+                const idx = currentIds.indexOf(id);
+                if (idx >= 0) {
+                    currentIds.splice(idx, 1);
+                }
+            });
+        }
+
+        this.selectedTranscriptIds = currentIds;
+        this.keyboardFocusedIndex = targetIndex;
     }
 
     _getFinalMessageIds() {
@@ -1160,12 +1310,14 @@ export class SttView extends LitElement {
         }
 
         return html`
-            <div class="transcription-container"
+            <div class="transcription-container ${this.isSelectionMode ? 'is-selection-mode' : ''}"
+                tabindex="0"
                 @mouseenter="${() => this.isHoveringList = true}"
-                @mouseleave="${() => this.isHoveringList = false}">
+                @mouseleave="${() => this.isHoveringList = false}"
+                @keydown="${this._handleKeyboardNavigation}">
                 ${this.sttMessages.length === 0
                     ? html`<div class="empty-state">Waiting for speech...</div>`
-                    : this.sttMessages.map(msg => {
+                    : this.sttMessages.map((msg, index) => {
                         const wrapperClass = this.getSpeakerClass(msg.speaker);
                         const translatedText = this.translations[msg.id];
                         const isPending = this._pendingTranslations.has(msg.id);
@@ -1176,9 +1328,9 @@ export class SttView extends LitElement {
                         }
 
                         return html`
-                            <div class="message-wrapper ${wrapperClass}" @click="${() => this._handleTranslationClick(msg)}">
+                            <div class="message-wrapper ${wrapperClass} ${this.isSelectionMode && this.keyboardFocusedIndex === index ? 'keyboard-focused' : ''}" @click="${() => this._handleTranslationClick(msg)}">
                                 <div class="message-content">
-                                    ${this.isHoveringList ? html`
+                                    ${this.isHoveringList || this.isSelectionMode ? html`
                                         <input
                                             type="checkbox"
                                             class="transcript-checkbox checkbox-wrapper"
