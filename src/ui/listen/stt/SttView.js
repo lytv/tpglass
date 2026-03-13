@@ -78,7 +78,7 @@ export class SttView extends LitElement {
         .message-content {
             display: flex;
             flex-direction: row;
-            align-items: flex-start;
+            align-items: center;
             gap: 4px;
         }
 
