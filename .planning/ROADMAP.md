@@ -105,10 +105,11 @@
 | 05.3 - Add Action Buttons to Transcript Modal | 2/2 | Complete    | 2026-03-12 |
 | 05.3.1 - Custom Prompts Settings | 2/2 | Complete    | 2026-03-12 |
 | 05.4 - Multi-Select Transcript Detail Display | 2/2 | Complete    | 2026-03-12 |
+| 05.4.1 - Keyboard Shortcut for Checkbox Selection | 1/1 | Complete    | 2026-03-13 |
 
 ---
 
-*Roadmap updated: 2026-03-12*
+*Roadmap updated: 2026-03-13*
 
 ### Phase 05.4: Multi-Select Transcript Detail Display (INSERTED)
 
@@ -121,6 +122,17 @@
 Plans:
 - [x] 05.4-01-PLAN.md — Checkbox selection UI with hover reveal, multi-panel modal with horizontal scroll
 - [x] 05.4-02-PLAN.md — Bulk actions with combined text, selection behavior
+
+### Phase 05.4.1: Keyboard shortcut for checkbox selection (INSERTED)
+
+**Goal:** Add keyboard navigation support for transcript checkbox selection in Listen view. Users can enter selection mode with Space, navigate with Up/Down arrows, toggle selection with Space/Enter, and use Shift+Arrow for range selection.
+
+**Requirements**: None specified
+**Depends on:** Phase 05.4
+**Plans:** 1/1 plans complete
+
+Plans:
+- [x] 05.4.1-01-PLAN.md — Add keyboard navigation state, handlers, and visual focus indicator to SttView.js
 
 ### Phase 05.3: Add Action Buttons to Transcript Detail Modal (INSERTED)
 
