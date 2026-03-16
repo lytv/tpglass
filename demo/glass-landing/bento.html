@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GlassTube - Live Transcript App | Minimal</title>
+    <title>TPGlass - Live Transcript App | Minimal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -109,6 +109,23 @@
             background-size: 32px 32px;
             opacity: 0.5;
         }
+        .lang-toggle {
+            display: flex;
+            background: #F3F4F6;
+            border-radius: 8px;
+            padding: 2px;
+        }
+        .lang-toggle button {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .lang-toggle button.active {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -119,13 +136,17 @@
                 <div class="w-10 h-10 bg-brand rounded-xl flex items-center justify-center">
                     <i data-lucide="glasses" class="w-5 h-5 text-white"></i>
                 </div>
-                <span class="text-lg font-semibold">GlassTube</span>
+                <span class="text-lg font-semibold">TPGlass</span>
             </div>
             <div class="hidden md:flex items-center gap-8">
-                <a href="#features" class="nav-link">Features</a>
-                <a href="#how-it-works" class="nav-link">How it works</a>
-                <a href="#download" class="nav-link">Download</a>
-                <a href="#" class="btn-primary text-sm py-2 px-4">Get Started</a>
+                <a href="#features" class="nav-link" data-i18n="nav.features">Features</a>
+                <a href="#how-it-works" class="nav-link" data-i18n="nav.howItWorks">How it works</a>
+                <a href="#download" class="nav-link" data-i18n="nav.download">Download</a>
+                <div class="lang-toggle">
+                    <button onclick="setLang('en')" id="lang-en" class="active">EN</button>
+                    <button onclick="setLang('vi')" id="lang-vi">VI</button>
+                </div>
+                <a href="#" class="btn-primary text-sm py-2 px-4" data-i18n="nav.getStarted">Get Started</a>
             </div>
         </div>
     </nav>
@@ -136,59 +157,59 @@
             <div class="text-center max-w-3xl mx-auto">
                 <div class="inline-flex items-center gap-2 px-4 py-2 bg-brand/10 text-brand rounded-full text-sm font-medium mb-8 animate-fade-in">
                     <span class="w-2 h-2 bg-brand rounded-full"></span>
-                    Now available for free
+                    <span data-i18n="hero.badge">Now available for free</span>
                 </div>
                 <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight animate-fade-up" style="animation-delay: 0.1s;">
-                    See every word<br>
-                    <span class="gradient-text">in real-time</span>
+                    <span data-i18n="hero.title1">See every word</span><br>
+                    <span class="gradient-text" data-i18n="hero.title2">in real-time</span>
                 </h1>
-                <p class="text-xl text-gray-500 mb-8 max-w-xl mx-auto animate-fade-up" style="animation-delay: 0.2s;">
-                    GlassTube captures live audio and displays transcripts instantly. Perfect for meetings, lectures, and accessibility.
+                <p class="text-xl text-gray-500 mb-8 max-w-xl mx-auto animate-fade-up" style="animation-delay: 0.2s;" data-i18n="hero.subtitle">
+                    TPGlass captures live audio and displays transcripts instantly. Perfect for meetings, lectures, and accessibility.
                 </p>
                 <div class="flex flex-wrap justify-center gap-3 mb-10 animate-fade-up" style="animation-delay: 0.3s;">
-                    <span class="px-4 py-2 bg-gray-100 rounded-full text-sm font-medium text-gray-600">👨‍💻 Developers</span>
-                    <span class="px-4 py-2 bg-gray-100 rounded-full text-sm font-medium text-gray-600">🎓 Students</span>
-                    <span class="px-4 py-2 bg-gray-100 rounded-full text-sm font-medium text-gray-600">💬 Communicators</span>
+                    <span class="px-4 py-2 bg-gray-100 rounded-full text-sm font-medium text-gray-600" data-i18n="hero.tag1">👨‍💻 Developers</span>
+                    <span class="px-4 py-2 bg-gray-100 rounded-full text-sm font-medium text-gray-600" data-i18n="hero.tag2">🎓 Students</span>
+                    <span class="px-4 py-2 bg-gray-100 rounded-full text-sm font-medium text-gray-600" data-i18n="hero.tag3">💬 Communicators</span>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center animate-fade-up" style="animation-delay: 0.4s;">
                     <a href="#download" class="btn-primary flex items-center justify-center gap-2">
                         <i data-lucide="download" class="w-5 h-5"></i>
-                        Download Free
+                        <span data-i18n="hero.downloadBtn">Download Free</span>
                     </a>
                     <a href="#how-it-works" class="btn-secondary flex items-center justify-center gap-2">
                         <i data-lucide="play" class="w-5 h-5"></i>
-                        See how it works
+                        <span data-i18n="hero.seeHowItWorks">See how it works</span>
                     </a>
                 </div>
             </div>
 
             <!-- Bento Grid Demo -->
             <div class="mt-20 bento-grid md:grid-cols-3 animate-scale-in" style="animation-delay: 0.5s;">
-                <div class="bento-card md:col-span-2 aspect-video flex items-center justify-center relative">
-                    <div class="absolute inset-0 hero-pattern"></div>
-                    <div class="relative z-10 text-center">
-                        <div class="w-20 h-20 mx-auto mb-4 bg-brand/10 rounded-2xl flex items-center justify-center">
-                            <i data-lucide="mic" class="w-10 h-10 text-brand"></i>
-                        </div>
-                        <p class="text-gray-500 font-medium">Live Transcription Demo</p>
-                    </div>
+                <div class="bento-card md:col-span-2 aspect-video flex items-center justify-center relative overflow-hidden">
+                    <iframe class="w-full h-full absolute inset-0"
+                        src="https://www.youtube.com/embed/o8YSehpTZGk?autoplay=1&mute=1&rel=0&controls=1&loop=1&playlist=o8YSehpTZGk"
+                        title="TPGlass Demo"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                        allowfullscreen>
+                    </iframe>
                 </div>
                 <div class="bento-card aspect-video flex items-center justify-center">
                     <div class="text-center">
                         <div class="text-4xl font-bold text-brand mb-1">99%</div>
-                        <p class="text-sm text-gray-500">Accuracy</p>
+                        <p class="text-sm text-gray-500" data-i18n="hero.accuracy">Accuracy</p>
                     </div>
                 </div>
                 <div class="bento-card aspect-video flex items-center justify-center">
                     <div class="text-center">
                         <div class="text-4xl font-bold text-sage mb-1">&lt;100ms</div>
-                        <p class="text-sm text-gray-500">Latency</p>
+                        <p class="text-sm text-gray-500" data-i18n="hero.latency">Latency</p>
                     </div>
                 </div>
                 <div class="bento-card md:col-span-2 aspect-video flex items-center justify-center">
                     <div class="text-center">
                         <div class="text-4xl font-bold mb-1">20+</div>
-                        <p class="text-sm text-gray-500">Languages Supported</p>
+                        <p class="text-sm text-gray-500" data-i18n="hero.languages">Languages Supported</p>
                     </div>
                 </div>
             </div>
@@ -199,8 +220,8 @@
     <section id="features" class="py-20 px-6 bg-white">
         <div class="max-w-6xl mx-auto">
             <div class="text-center mb-16">
-                <h2 class="text-4xl font-bold mb-4">Everything you need</h2>
-                <p class="text-gray-500">Powerful features, beautifully simple</p>
+                <h2 class="text-4xl font-bold mb-4" data-i18n="features.title">Everything you need</h2>
+                <p class="text-gray-500" data-i18n="features.subtitle">Powerful features, beautifully simple</p>
             </div>
 
             <div class="bento-grid md:grid-cols-3">
@@ -208,43 +229,43 @@
                     <div class="w-12 h-12 bg-brand/10 rounded-xl flex items-center justify-center mb-4">
                         <i data-lucide="mic" class="w-6 h-6 text-brand"></i>
                     </div>
-                    <h3 class="text-lg font-semibold mb-2">Live Transcription</h3>
-                    <p class="text-gray-500 text-sm">Real-time speech-to-text with minimal latency</p>
+                    <h3 class="text-lg font-semibold mb-2" data-i18n="features.f1.title">Live Transcription</h3>
+                    <p class="text-gray-500 text-sm" data-i18n="features.f1.desc">Real-time speech-to-text with minimal latency</p>
                 </div>
                 <div class="bento-card p-8">
                     <div class="w-12 h-12 bg-sage/10 rounded-xl flex items-center justify-center mb-4">
                         <i data-lucide="message-circle" class="w-6 h-6 text-sage"></i>
                     </div>
-                    <h3 class="text-lg font-semibold mb-2">Chat with Transcript</h3>
-                    <p class="text-gray-500 text-sm">Ask questions about your transcripts using AI</p>
+                    <h3 class="text-lg font-semibold mb-2" data-i18n="features.f2.title">Chat with Transcript</h3>
+                    <p class="text-gray-500 text-sm" data-i18n="features.f2.desc">Ask questions about your transcripts using AI</p>
                 </div>
                 <div class="bento-card p-8">
                     <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
                         <i data-lucide="file-text" class="w-6 h-6 text-blue-600"></i>
                     </div>
-                    <h3 class="text-lg font-semibold mb-2">Export & Save</h3>
-                    <p class="text-gray-500 text-sm">Export transcripts as TXT, PDF, or Markdown</p>
+                    <h3 class="text-lg font-semibold mb-2" data-i18n="features.f3.title">Export & Save</h3>
+                    <p class="text-gray-500 text-sm" data-i18n="features.f3.desc">Export transcripts as TXT, PDF, or Markdown</p>
                 </div>
                 <div class="bento-card p-8">
                     <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
                         <i data-lucide="languages" class="w-6 h-6 text-purple-600"></i>
                     </div>
-                    <h3 class="text-lg font-semibold mb-2">Multi-Language</h3>
-                    <p class="text-gray-500 text-sm">Support for 20+ languages and dialects</p>
+                    <h3 class="text-lg font-semibold mb-2" data-i18n="features.f4.title">Multi-Language</h3>
+                    <p class="text-gray-500 text-sm" data-i18n="features.f4.desc">Support for 20+ languages and dialects</p>
                 </div>
                 <div class="bento-card p-8">
                     <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mb-4">
                         <i data-lucide="settings" class="w-6 h-6 text-orange-600"></i>
                     </div>
-                    <h3 class="text-lg font-semibold mb-2">Customizable</h3>
-                    <p class="text-gray-500 text-sm">Adjust fonts, colors, and display preferences</p>
+                    <h3 class="text-lg font-semibold mb-2" data-i18n="features.f5.title">Customizable</h3>
+                    <p class="text-gray-500 text-sm" data-i18n="features.f5.desc">Adjust fonts, colors, and display preferences</p>
                 </div>
                 <div class="bento-card p-8">
                     <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
                         <i data-lucide="shield" class="w-6 h-6 text-green-600"></i>
                     </div>
-                    <h3 class="text-lg font-semibold mb-2">Privacy First</h3>
-                    <p class="text-gray-500 text-sm">Local processing, no data leaves your device</p>
+                    <h3 class="text-lg font-semibold mb-2" data-i18n="features.f6.title">Privacy First</h3>
+                    <p class="text-gray-500 text-sm" data-i18n="features.f6.desc">Local processing, no data leaves your device</p>
                 </div>
             </div>
         </div>
@@ -254,30 +275,30 @@
     <section id="how-it-works" class="py-20 px-6 bg-cream">
         <div class="max-w-6xl mx-auto">
             <div class="text-center mb-16">
-                <h2 class="text-4xl font-bold mb-4">How it works</h2>
-                <p class="text-gray-500">Get started in 4 simple steps</p>
+                <h2 class="text-4xl font-bold mb-4" data-i18n="how.title">How it works</h2>
+                <p class="text-gray-500" data-i18n="how.subtitle">Get started in 4 simple steps</p>
             </div>
 
             <div class="grid md:grid-cols-4 gap-6">
                 <div class="text-center">
                     <div class="w-14 h-14 mx-auto mb-4 bg-brand text-white rounded-2xl flex items-center justify-center text-xl font-bold">1</div>
-                    <h3 class="font-semibold mb-2">Listen</h3>
-                    <p class="text-sm text-gray-500">Capture audio from mic or system</p>
+                    <h3 class="font-semibold mb-2" data-i18n="how.s1.title">Listen</h3>
+                    <p class="text-sm text-gray-500" data-i18n="how.s1.desc">Capture audio from mic or system</p>
                 </div>
                 <div class="text-center">
                     <div class="w-14 h-14 mx-auto mb-4 bg-brand text-white rounded-2xl flex items-center justify-center text-xl font-bold">2</div>
-                    <h3 class="font-semibold mb-2">Transcribe</h3>
-                    <p class="text-sm text-gray-500">AI converts speech to text</p>
+                    <h3 class="font-semibold mb-2" data-i18n="how.s2.title">Transcribe</h3>
+                    <p class="text-sm text-gray-500" data-i18n="how.s2.desc">AI converts speech to text</p>
                 </div>
                 <div class="text-center">
                     <div class="w-14 h-14 mx-auto mb-4 bg-brand text-white rounded-2xl flex items-center justify-center text-xl font-bold">3</div>
-                    <h3 class="font-semibold mb-2">Ask</h3>
-                    <p class="text-sm text-gray-500">Query using natural language</p>
+                    <h3 class="font-semibold mb-2" data-i18n="how.s3.title">Ask</h3>
+                    <p class="text-sm text-gray-500" data-i18n="how.s3.desc">Query using natural language</p>
                 </div>
                 <div class="text-center">
                     <div class="w-14 h-14 mx-auto mb-4 bg-brand text-white rounded-2xl flex items-center justify-center text-xl font-bold">4</div>
-                    <h3 class="font-semibold mb-2">Save</h3>
-                    <p class="text-sm text-gray-500">Export or keep for later</p>
+                    <h3 class="font-semibold mb-2" data-i18n="how.s4.title">Save</h3>
+                    <p class="text-sm text-gray-500" data-i18n="how.s4.desc">Export or keep for later</p>
                 </div>
             </div>
         </div>
@@ -285,35 +306,62 @@
 
     <!-- Download Section -->
     <section id="download" class="py-20 px-6">
-        <div class="max-w-4xl mx-auto text-center">
-            <h2 class="text-4xl font-bold mb-4">Download GlassTube</h2>
-            <p class="text-gray-500 mb-12">Choose your platform and start for free</p>
+        <div class="max-w-6xl mx-auto text-center">
+            <h2 class="text-4xl font-bold mb-4" data-i18n="download.title">Download TPGlass</h2>
+            <p class="text-gray-500 mb-12" data-i18n="download.subtitle">Choose your platform and start for free</p>
 
-            <div class="grid md:grid-cols-3 gap-4">
-                <div class="bento-card p-8 cursor-pointer hover:border-brand">
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <a href="https://github.com/lytv/tpglass-releases/releases/download/v0.5.9/TPGlass-0.5.9-arm64.dmg" class="bento-card p-8 cursor-pointer hover:border-brand block text-left">
                     <div class="w-14 h-14 mx-auto mb-4 bg-gray-900 rounded-xl flex items-center justify-center">
                         <i data-lucide="apple" class="w-7 h-7 text-white"></i>
                     </div>
                     <h3 class="font-semibold mb-1">macOS</h3>
-                    <p class="text-sm text-gray-500 mb-3">Apple Silicon & Intel</p>
-                    <span class="text-sm font-medium text-brand">v1.0.0 - Free</span>
-                </div>
-                <div class="bento-card p-8 cursor-pointer hover:border-brand">
+                    <p class="text-sm text-gray-500 mb-3" data-i18n="download.macDmg">Apple Silicon (M1/M2/M3)</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-brand">v0.5.9 - DMG</span>
+                        <span class="text-xs text-gray-400">136 MB</span>
+                    </div>
+                </a>
+                <a href="https://github.com/lytv/tpglass-releases/releases/download/v0.5.9/TPGlass-0.5.9-arm64-mac.zip" class="bento-card p-8 cursor-pointer hover:border-brand block text-left">
+                    <div class="w-14 h-14 mx-auto mb-4 bg-gray-800 rounded-xl flex items-center justify-center">
+                        <i data-lucide="archive" class="w-7 h-7 text-white"></i>
+                    </div>
+                    <h3 class="font-semibold mb-1">macOS</h3>
+                    <p class="text-sm text-gray-500 mb-3" data-i18n="download.macZip">Portable ZIP (M1/M2/M3)</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-brand">v0.5.9 - ZIP</span>
+                        <span class="text-xs text-gray-400">267 MB</span>
+                    </div>
+                </a>
+                <a href="https://github.com/lytv/tpglass-releases/releases/download/v0.5.9/win-unpacked.zip" class="bento-card p-8 cursor-pointer hover:border-brand block text-left">
                     <div class="w-14 h-14 mx-auto mb-4 bg-brand rounded-xl flex items-center justify-center">
                         <i data-lucide="monitor" class="w-7 h-7 text-white"></i>
                     </div>
                     <h3 class="font-semibold mb-1">Windows</h3>
                     <p class="text-sm text-gray-500 mb-3">Windows 10 & 11</p>
-                    <span class="text-sm font-medium text-brand">v1.0.0 - Free</span>
-                </div>
-                <div class="bento-card p-8 cursor-pointer hover:border-brand">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-brand">v0.5.9 - ZIP</span>
+                        <span class="text-xs text-gray-400">150 MB</span>
+                    </div>
+                </a>
+                <a href="https://github.com/lytv/tpglass-releases/releases/download/v0.5.9/linux-unpacked.zip" class="bento-card p-8 cursor-pointer hover:border-brand block text-left">
                     <div class="w-14 h-14 mx-auto mb-4 bg-orange-500 rounded-xl flex items-center justify-center">
                         <i data-lucide="linux" class="w-7 h-7 text-white"></i>
                     </div>
                     <h3 class="font-semibold mb-1">Linux</h3>
                     <p class="text-sm text-gray-500 mb-3">Debian, Ubuntu, Fedora</p>
-                    <span class="text-sm font-medium text-brand">v1.0.0 - Free</span>
-                </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-brand">v0.5.9 - ZIP</span>
+                        <span class="text-xs text-gray-400">146 MB</span>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Source Code -->
+            <div class="mt-8">
+                <a href="https://github.com/lytv/tpglass" class="text-sm text-gray-500 hover:text-brand" data-i18n="download.sourceCode">
+                    View source code on GitHub
+                </a>
             </div>
         </div>
     </section>
@@ -321,27 +369,35 @@
     <!-- Team -->
     <section class="py-20 px-6 bg-white">
         <div class="max-w-4xl mx-auto text-center">
-            <h2 class="text-4xl font-bold mb-12">Meet the team</h2>
-            <div class="grid md:grid-cols-4 gap-6">
-                <div>
-                    <div class="w-20 h-20 mx-auto mb-3 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full"></div>
-                    <h3 class="font-semibold">Alex Chen</h3>
-                    <p class="text-sm text-gray-500">Lead Developer</p>
+            <h2 class="text-4xl font-bold mb-12" data-i18n="team.title">Meet the team</h2>
+            <div class="flex justify-center items-start gap-8 flex-wrap">
+                <div class="text-center">
+                    <div class="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                        <img src="anhly.jpg" alt="Lý Truong" class="w-full h-full object-cover">
+                    </div>
+                    <h3 class="font-semibold text-lg">Lý Truong</h3>
+                    <p class="text-sm text-gray-500" data-i18n="team.pm">Product Manager</p>
                 </div>
-                <div>
-                    <div class="w-20 h-20 mx-auto mb-3 bg-gradient-to-br from-pink-200 to-rose-300 rounded-full"></div>
-                    <h3 class="font-semibold">Sarah Kim</h3>
-                    <p class="text-sm text-gray-500">Designer</p>
+                <div class="text-center">
+                    <div class="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                        <img src="huuhoang.jpeg" alt="Huu Hoang" class="w-full h-full object-cover">
+                    </div>
+                    <h3 class="font-semibold text-lg">Huu Hoang</h3>
+                    <p class="text-sm text-gray-500" data-i18n="team.designer">Designer</p>
                 </div>
-                <div>
-                    <div class="w-20 h-20 mx-auto mb-3 bg-gradient-to-br from-blue-200 to-cyan-300 rounded-full"></div>
-                    <h3 class="font-semibold">Mike Johnson</h3>
-                    <p class="text-sm text-gray-500">ML Engineer</p>
+                <div class="text-center">
+                    <div class="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                        <img src="https://github.com/favicon.ico" alt="GSD" class="w-full h-full object-cover bg-white">
+                    </div>
+                    <h3 class="font-semibold text-lg">GSD</h3>
+                    <p class="text-sm text-gray-500">AI Developer</p>
                 </div>
-                <div>
-                    <div class="w-20 h-20 mx-auto mb-3 bg-gradient-to-br from-purple-200 to-violet-300 rounded-full"></div>
-                    <h3 class="font-semibold">Emma Davis</h3>
-                    <p class="text-sm text-gray-500">Product</p>
+                <div class="text-center">
+                    <div class="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                        <img src="https://www.minimax.io/favicon.ico" alt="MiniMax Agent" class="w-full h-full object-cover bg-white">
+                    </div>
+                    <h3 class="font-semibold text-lg">MiniMax Agent</h3>
+                    <p class="text-sm text-gray-500">AI Assistant</p>
                 </div>
             </div>
         </div>
@@ -354,9 +410,9 @@
                 <div class="w-8 h-8 bg-brand rounded-lg flex items-center justify-center">
                     <i data-lucide="glasses" class="w-4 h-4 text-white"></i>
                 </div>
-                <span class="font-semibold">GlassTube</span>
+                <span class="font-semibold">TPGlass</span>
             </div>
-            <p class="text-sm text-gray-400">© 2024 GlassTube. All rights reserved.</p>
+            <p class="text-sm text-gray-400">&copy; 2025 TPGlass. <span data-i18n="footer.rights">All rights reserved.</span></p>
             <div class="flex items-center gap-4">
                 <a href="#" class="text-gray-400 hover:text-gray-600"><i data-lucide="github" class="w-5 h-5"></i></a>
                 <a href="#" class="text-gray-400 hover:text-gray-600"><i data-lucide="twitter" class="w-5 h-5"></i></a>
@@ -366,7 +422,136 @@
     </footer>
 
     <script>
-        lucide.createIcons();
+        const translations = {
+            en: {
+                'nav.features': 'Features',
+                'nav.howItWorks': 'How it works',
+                'nav.download': 'Download',
+                'nav.getStarted': 'Get Started',
+                'hero.badge': 'Now available for free',
+                'hero.title1': 'See every word',
+                'hero.title2': 'in real-time',
+                'hero.subtitle': 'TPGlass captures live audio and displays transcripts instantly. Perfect for meetings, lectures, and accessibility.',
+                'hero.tag1': '👨‍💻 Developers',
+                'hero.tag2': '🎓 Students',
+                'hero.tag3': '💬 Communicators',
+                'hero.downloadBtn': 'Download Free',
+                'hero.seeHowItWorks': 'See how it works',
+                'hero.demo': 'Live Transcription Demo',
+                'hero.accuracy': 'Accuracy',
+                'hero.latency': 'Latency',
+                'hero.languages': 'Languages Supported',
+                'features.title': 'Everything you need',
+                'features.subtitle': 'Powerful features, beautifully simple',
+                'features.f1.title': 'Live Transcription',
+                'features.f1.desc': 'Real-time speech-to-text with minimal latency',
+                'features.f2.title': 'Chat with Transcript',
+                'features.f2.desc': 'Ask questions about your transcripts using AI',
+                'features.f3.title': 'Export & Save',
+                'features.f3.desc': 'Export transcripts as TXT, PDF, or Markdown',
+                'features.f4.title': 'Multi-Language',
+                'features.f4.desc': 'Support for 20+ languages and dialects',
+                'features.f5.title': 'Customizable',
+                'features.f5.desc': 'Adjust fonts, colors, and display preferences',
+                'features.f6.title': 'Privacy First',
+                'features.f6.desc': 'Local processing, no data leaves your device',
+                'how.title': 'How it works',
+                'how.subtitle': 'Get started in 4 simple steps',
+                'how.s1.title': 'Listen',
+                'how.s1.desc': 'Capture audio from mic or system',
+                'how.s2.title': 'Transcribe',
+                'how.s2.desc': 'AI converts speech to text',
+                'how.s3.title': 'Ask',
+                'how.s3.desc': 'Query using natural language',
+                'how.s4.title': 'Save',
+                'how.s4.desc': 'Export or keep for later',
+                'download.title': 'Download TPGlass',
+                'download.subtitle': 'Choose your platform and start for free',
+                'download.macDmg': 'Apple Silicon (M1/M2/M3)',
+                'download.macZip': 'Portable ZIP (M1/M2/M3)',
+                'download.sourceCode': 'View source code on GitHub',
+                'team.title': 'Meet the team',
+                'team.pm': 'Product Manager',
+                'team.designer': 'Designer',
+                'footer.rights': 'All rights reserved.'
+            },
+            vi: {
+                'nav.features': 'Tính năng',
+                'nav.howItWorks': 'Cách hoạt động',
+                'nav.download': 'Tải xuống',
+                'nav.getStarted': 'Bắt đầu ngay',
+                'hero.badge': 'Giờ đây miễn phí',
+                'hero.title1': 'Nhận mọi từ',
+                'hero.title2': 'theo thời gian thực',
+                'hero.subtitle': 'TPGlass ghi âm trực tiếp và hiển thị bản ghi tức thì. Phù hợp cho cuộc họp, bài giảng và hỗ trợ tiếp cận.',
+                'hero.tag1': '👨‍💻 Lập trình viên',
+                'hero.tag2': '🎓 Sinh viên',
+                'hero.tag3': '💬 Người giao tiếp',
+                'hero.downloadBtn': 'Tải miễn phí',
+                'hero.seeHowItWorks': 'Xem cách hoạt động',
+                'hero.demo': 'Demo chép lời trực tiếp',
+                'hero.accuracy': 'Độ chính xác',
+                'hero.latency': 'Độ trễ',
+                'hero.languages': 'Ngôn ngữ được hỗ trợ',
+                'features.title': 'Mọi thứ bạn cần',
+                'features.subtitle': 'Tính năng mạnh mẽ, đơn giản và đẹp',
+                'features.f1.title': 'Chép lời trực tiếp',
+                'features.f1.desc': 'Chuyển giọng nói thành văn bản thời gian thực với độ trễ thấp',
+                'features.f2.title': 'Trò chuyện với bản ghi',
+                'features.f2.desc': 'Đặt câu hỏi về bản ghi bằng AI',
+                'features.f3.title': 'Xuất & Lưu',
+                'features.f3.desc': 'Xuất bản ghi dạng TXT, PDF hoặc Markdown',
+                'features.f4.title': 'Đa ngôn ngữ',
+                'features.f4.desc': 'Hỗ trợ hơn 20 ngôn ngữ và phương ngữ',
+                'features.f5.title': 'Tùy chỉnh',
+                'features.f5.desc': 'Điều chỉnh phông chữ, màu sắc và hiển thị',
+                'features.f6.title': 'Bảo mật',
+                'features.f6.desc': 'Xử lý cục bộ, dữ liệu không rời thiết bị',
+                'how.title': 'Cách hoạt động',
+                'how.subtitle': 'Bắt đầu trong 4 bước đơn giản',
+                'how.s1.title': 'Nghe',
+                'how.s1.desc': 'Thu âm từ mic hoặc hệ thống',
+                'how.s2.title': 'Chép',
+                'how.s2.desc': 'AI chuyển giọng nói thành văn bản',
+                'how.s3.title': 'Hỏi',
+                'how.s3.desc': 'Truy vấn bằng ngôn ngữ tự nhiên',
+                'how.s4.title': 'Lưu',
+                'how.s4.desc': 'Xuất hoặc lưu lại để sau',
+                'download.title': 'Tải TPGlass',
+                'download.subtitle': 'Chọn nền tảng và bắt đầu miễn phí',
+                'download.macDmg': 'Apple Silicon (M1/M2/M3)',
+                'download.macZip': 'ZIP di động (M1/M2/M3)',
+                'download.sourceCode': 'Xem mã nguồn trên GitHub',
+                'team.title': 'Gặp gỡ đội ngũ',
+                'team.pm': 'Quản lý sản phẩm',
+                'team.designer': 'Nhà thiết kế',
+                'footer.rights': 'Mọi quyền được bảo lưu.'
+            }
+        };
+
+        function setLang(lang) {
+            // Update toggle buttons
+            document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+            document.getElementById('lang-vi').classList.toggle('active', lang === 'vi');
+
+            // Update all translatable elements
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+
+            // Save preference
+            localStorage.setItem('tpglass-lang', lang);
+        }
+
+        // Load saved language preference
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedLang = localStorage.getItem('tpglass-lang') || 'en';
+            setLang(savedLang);
+            lucide.createIcons();
+        });
     </script>
 </body>
 </html>
