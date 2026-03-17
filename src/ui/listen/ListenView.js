@@ -573,6 +573,11 @@ export class ListenView extends LitElement {
         this.translationLanguage = 'en';
         this.translationSettingsLoaded = false;
 
+        // Auto-save properties
+        this.autoSaveInterval = null;
+        this.currentTranscriptFilePath = null;
+        this.currentTranscriptFilename = null;
+
         this.adjustWindowHeight = this.adjustWindowHeight.bind(this);
     }
 
@@ -592,6 +597,8 @@ export class ListenView extends LitElement {
                 if (!wasActive && isActive) {
                     this.hasCompletedRecording = false;
                     this.startTimer();
+                    // Start auto-save interval
+                    this.startAutoSaveInterval();
                     // Reset child components
                     this.updateComplete.then(() => {
                         const sttView = this.shadowRoot.querySelector('stt-view');
@@ -604,6 +611,8 @@ export class ListenView extends LitElement {
                 if (wasActive && !isActive) {
                     this.hasCompletedRecording = true;
                     this.stopTimer();
+                    // Stop auto-save interval
+                    this.stopAutoSaveInterval();
                     // Auto-save transcript when session stops
                     this.autoSaveTranscript();
                     this.requestUpdate();
@@ -620,6 +629,7 @@ export class ListenView extends LitElement {
     disconnectedCallback() {
         super.disconnectedCallback();
         this.stopTimer();
+        this.stopAutoSaveInterval();
 
         // Clean up translation settings listener
         if (this._onTranslationSettingsUpdated && window.api && window.api.ui) {
@@ -808,19 +818,76 @@ export class ListenView extends LitElement {
         }
 
         try {
-            // Auto-save without showing dialog
-            const timestamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
-            const defaultFilename = `transcript-${timestamp}.txt`;
+            // If we already have a transcript file path from auto-save, use it
+            if (this.currentTranscriptFilePath) {
+                await window.api.listenView.saveTranscriptToPath(this.currentTranscriptFilePath, textToSave);
+                console.log('[ListenView] Final transcript saved to:', this.currentTranscriptFilePath);
+            } else {
+                // Fallback: create new file if no auto-save path exists
+                const timestamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
+                const defaultFilename = `transcript-${timestamp}.txt`;
 
-            const result = await window.api.listenView.saveTranscript(textToSave, { autoSave: true, defaultFilename });
+                const result = await window.api.listenView.saveTranscript(textToSave, { autoSave: true, defaultFilename });
 
-            if (result.success) {
-                console.log('[ListenView] Transcript auto-saved to:', result.filePath);
-            } else if (!result.canceled) {
-                console.error('[ListenView] Auto-save failed:', result.error);
+                if (result.success) {
+                    console.log('[ListenView] Transcript auto-saved to:', result.filePath);
+                } else if (!result.canceled) {
+                    console.error('[ListenView] Auto-save failed:', result.error);
+                }
             }
         } catch (error) {
             console.error('[ListenView] Auto-save error:', error);
+        }
+    }
+
+    // Create transcript file when session starts
+    async createTranscriptFile() {
+        try {
+            const lastSavePath = await window.api.listenView.getLastSavePath();
+            const timestamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
+            this.currentTranscriptFilename = `transcript-${timestamp}.txt`;
+            this.currentTranscriptFilePath = window.api.listenView.joinPath(lastSavePath, this.currentTranscriptFilename);
+
+            // Create empty file with header
+            const initialContent = `Transcript - ${new Date().toLocaleString()}\n\n`;
+            await window.api.listenView.saveTranscriptToPath(this.currentTranscriptFilePath, initialContent);
+            console.log('[ListenView] Transcript file created:', this.currentTranscriptFilePath);
+        } catch (error) {
+            console.error('[ListenView] Error creating transcript file:', error);
+        }
+    }
+
+    // Auto-save every 3 seconds during recording
+    async saveTranscriptPeriodically() {
+        if (!this.currentTranscriptFilePath) return;
+
+        const sttView = this.shadowRoot.querySelector('stt-view');
+        if (!sttView) return;
+
+        const textToSave = sttView.getTranscriptText();
+        if (!textToSave.trim()) return;
+
+        try {
+            await window.api.listenView.saveTranscriptToPath(this.currentTranscriptFilePath, textToSave);
+            console.log('[ListenView] Transcript auto-saved at:', new Date().toLocaleTimeString());
+        } catch (error) {
+            console.error('[ListenView] Error auto-saving transcript:', error);
+        }
+    }
+
+    // Start auto-save interval
+    startAutoSaveInterval() {
+        this.createTranscriptFile();
+        this.autoSaveInterval = setInterval(() => {
+            this.saveTranscriptPeriodically();
+        }, 3000);
+    }
+
+    // Stop auto-save interval
+    stopAutoSaveInterval() {
+        if (this.autoSaveInterval) {
+            clearInterval(this.autoSaveInterval);
+            this.autoSaveInterval = null;
         }
     }
 

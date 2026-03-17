@@ -182,9 +182,16 @@ contextBridge.exposeInMainWorld('api', {
       return ipcRenderer.invoke('file:save-transcript', { content, defaultFilename, ...options });
     },
 
+    // Save transcript to specific file path (for auto-save during recording)
+    saveTranscriptToPath: (filePath, content) => {
+      return ipcRenderer.invoke('file:save-transcript-to-path', { filePath, content });
+    },
+
     // Path management
     getLastSavePath: () => ipcRenderer.invoke('file:get-last-save-path'),
     setLastSavePath: (savePath) => ipcRenderer.invoke('file:set-last-save-path', { path: savePath }),
+    // Utility to join path parts (for use in renderer)
+    joinPath: (...parts) => parts.join('/'),
 
     // Listeners
     onSessionStateChanged: (callback) => ipcRenderer.on('session-state-changed', callback),

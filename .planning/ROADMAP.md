@@ -106,10 +106,23 @@
 | 05.3.1 - Custom Prompts Settings | 2/2 | Complete    | 2026-03-12 |
 | 05.4 - Multi-Select Transcript Detail Display | 2/2 | Complete    | 2026-03-12 |
 | 05.4.1 - Keyboard Shortcut for Checkbox Selection | 1/1 | Complete    | 2026-03-13 |
+| 05.4.2 - Audio Recording for Listen Feature | 2/2 | Planned | - |
 
 ---
 
-*Roadmap updated: 2026-03-13*
+*Roadmap updated: 2026-03-17*
+
+### Phase 05.4.2: Audio Recording for Listen Feature (INSERTED)
+
+**Goal:** Automatically record audio when user clicks Listen. When user clicks Stop, save the recording as MP3 file to the same folder as the transcript.
+
+**Requirements**: None specified
+**Depends on:** Phase 05.4.1
+**Plans:** 2/2 plans
+
+Plans:
+- [x] 05.4.2-01-PLAN.md — RecordingService with lame encoding, IPC handlers in featureBridge
+- [x] 05.4.2-02-PLAN.md — Preload bridge and listenService integration
 
 ### Phase 05.4: Multi-Select Transcript Detail Display (INSERTED)
 
@@ -117,7 +130,7 @@
 
 **Requirements**: None specified
 **Depends on:** Phase 5
-**Plans:** 2/2 plans complete
+**Plans**: 2/2 plans complete
 
 Plans:
 - [x] 05.4-01-PLAN.md — Checkbox selection UI with hover reveal, multi-panel modal with horizontal scroll
@@ -129,7 +142,7 @@ Plans:
 
 **Requirements**: None specified
 **Depends on:** Phase 05.4
-**Plans:** 1/1 plans complete
+**Plans**: 1/1 plans complete
 
 Plans:
 - [x] 05.4.1-01-PLAN.md — Add keyboard navigation state, handlers, and visual focus indicator to SttView.js

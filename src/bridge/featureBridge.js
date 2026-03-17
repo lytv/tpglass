@@ -202,6 +202,18 @@ module.exports = {
       }
     });
 
+    // File save - Save transcript to specific file path (for auto-save during recording)
+    ipcMain.handle('file:save-transcript-to-path', async (event, { filePath, content }) => {
+      try {
+        await fs.promises.writeFile(filePath, content, 'utf-8');
+        console.log('[FeatureBridge] Transcript saved to:', filePath);
+        return { success: true, filePath };
+      } catch (error) {
+        console.error('[FeatureBridge] Error saving transcript:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
     // Get last save path
     ipcMain.handle('file:get-last-save-path', async () => {
       return pathStore.get('lastSavePath', path.join(os.homedir(), 'Documents'));
