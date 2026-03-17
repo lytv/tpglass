@@ -797,20 +797,8 @@ export class ListenView extends LitElement {
     }
 
     async autoSaveTranscript() {
-        // Get transcript text - try both transcript and summary views
-        let textToSave = '';
-
-        // First try transcript view (preferred)
-        const sttView = this.shadowRoot.querySelector('stt-view');
-        if (sttView) {
-            textToSave = sttView.getTranscriptText() || '';
-        }
-
-        // If no transcript text, try summary view
-        if (!textToSave.trim()) {
-            const summaryView = this.shadowRoot.querySelector('summary-view');
-            textToSave = summaryView ? summaryView.getSummaryText() || '' : '';
-        }
+        // Use the formatted transcript with translations
+        const textToSave = this.formatTranscriptWithTranslations();
 
         if (!textToSave.trim()) {
             console.log('[ListenView] No transcript text to auto-save');
@@ -840,6 +828,31 @@ export class ListenView extends LitElement {
         }
     }
 
+    // Format transcript with translations in Option 3 format
+    formatTranscriptWithTranslations() {
+        const sttView = this.shadowRoot.querySelector('stt-view');
+        if (!sttView) return '';
+
+        const messages = sttView.sttMessages;
+        const translations = sttView.translations || {};
+        const showTranslation = sttView.showTranslation;
+
+        if (!messages || messages.length === 0) return '';
+
+        let formatted = `Transcript - ${new Date().toLocaleString()}\n\n`;
+
+        messages.forEach((msg, index) => {
+            const speakerLabel = msg.speaker === 'Me' ? 'You' : msg.speaker;
+            formatted += `${index + 1}. **Original:** ${msg.text}\n`;
+            if (showTranslation && translations[msg.id]) {
+                formatted += `   **Translation:** ${translations[msg.id]}\n`;
+            }
+            formatted += '\n';
+        });
+
+        return formatted;
+    }
+
     // Create transcript file when session starts
     async createTranscriptFile() {
         try {
@@ -861,10 +874,7 @@ export class ListenView extends LitElement {
     async saveTranscriptPeriodically() {
         if (!this.currentTranscriptFilePath) return;
 
-        const sttView = this.shadowRoot.querySelector('stt-view');
-        if (!sttView) return;
-
-        const textToSave = sttView.getTranscriptText();
+        const textToSave = this.formatTranscriptWithTranslations();
         if (!textToSave.trim()) return;
 
         try {
